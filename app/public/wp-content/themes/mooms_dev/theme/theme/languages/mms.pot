@@ -1,0 +1,183 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: MOOMS.DEV\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-28 03:26+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: \n"
+"Language: \n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Loco https://localise.biz/\n"
+"X-Loco-Version: 2.7.2; wp-6.8.1\n"
+"X-Domain: mms"
+
+#: search.php:21
+#, php-format
+msgid "%s"
+msgstr ""
+
+#: setup/blocks/about.php:8
+msgid "BLOCK ABOUT ME"
+msgstr ""
+
+#: setup/blocks/about.php:6
+msgid "Block ABOUT ME"
+msgstr ""
+
+#: setup/blocks/blog.php:11
+msgid "Block blog"
+msgstr ""
+
+#: setup/blocks/service.php:8
+msgid "BLOCK SERVICE"
+msgstr ""
+
+#: setup/blocks/service.php:6
+msgid "Block Service"
+msgstr ""
+
+#: setup/blocks/slider.php:8
+msgid "BLOCK SLIDER"
+msgstr ""
+
+#: setup/blocks/slider.php:6
+msgid "Block Slider"
+msgstr ""
+
+#: setup/blocks/blog.php:13
+msgid "BLOCK TIN TỨC"
+msgstr ""
+
+#: setup/theme-options.php:18
+msgid "Branding | Thương hiệu"
+msgstr ""
+
+#: setup/users/auth.php:144
+msgid "Chúc mừng bạn đã đăng nhập thành công"
+msgstr ""
+
+#: setup/users/auth.php:175
+msgid "Chúc mừng bạn đã đăng nhập thành công với quyền admin"
+msgstr ""
+
+#: setup/blocks/blog.php:37
+msgid "Chọn bài viết thủ công"
+msgstr ""
+
+#: setup/blocks/service.php:14
+msgid "Chọn dịch vụ hiển thị:"
+msgstr ""
+
+#: setup/blocks/slider.php:9
+msgid "Chọn hình ảnh (khuyến nghị tỉ lệ 16/9)"
+msgstr ""
+
+#: setup/theme-options.php:29
+msgid "Contact | Liên hệ"
+msgstr ""
+
+#: setup/theme-options.php:23
+msgid "Default image | Hình ảnh mặc định"
+msgstr ""
+
+#: setup/sidebars.php:31
+msgid "Default Sidebar"
+msgstr ""
+
+#: setup/menus.php:21
+msgid "Footer Menu"
+msgstr ""
+
+#: setup/theme-options.php:56
+msgid "Header  |  Footer"
+msgstr ""
+
+#: search.php:36
+msgid "Không có bài viết liên quan tới từ khóa tìm kiếm"
+msgstr ""
+
+#: functions.php:228
+msgid "Không có kết quả"
+msgstr ""
+
+#: search.php:24
+msgid "kết quả cho từ khóa"
+msgstr ""
+
+#. Name of the template
+#: page_templates/template-contact.php:2
+msgid "Liên hệ"
+msgstr ""
+
+#: setup/theme-options.php:19
+msgid "Logo"
+msgstr ""
+
+#: setup/theme-options.php:21
+msgid "Logo Dark"
+msgstr ""
+
+#: setup/menus.php:20
+msgid "Main Menu"
+msgstr ""
+
+#: setup/menus.php:30
+msgid "Menu image"
+msgstr ""
+
+#: setup/theme-options.php:15
+msgid "MMS Theme"
+msgstr ""
+
+#. Name of the theme
+msgid "mooms_dev/mooms_dev/theme"
+msgstr ""
+
+#: setup/theme-options.php:71
+msgid "Scripts"
+msgstr ""
+
+#: setup/users/auth.php:22 setup/users/auth.php:67
+msgid "Token mismatch!"
+msgstr ""
+
+#: 404.php:56
+msgid "Trang chủ"
+msgstr ""
+
+#: setup/users/auth.php:26
+msgid "Tài khoản hoặc mật khẩu không đúng, vui lòng kiểm tra lại"
+msgstr ""
+
+#: setup/blocks/blog.php:31
+msgid "Tự động hiển thị 3 bài viết mới nhất"
+msgstr ""
+
+#: setup/users/auth.php:87
+msgid "Vui lòng kiểm tra lại mật khẩu"
+msgstr ""
+
+#: setup/users/auth.php:79
+msgid "Vui lòng nhập email"
+msgstr ""
+
+#: setup/users/auth.php:71
+msgid "Vui lòng nhập họ"
+msgstr ""
+
+#: setup/users/auth.php:83
+msgid "Vui lòng nhập mật khẩu"
+msgstr ""
+
+#: setup/users/auth.php:75
+msgid "Vui lòng nhập tên"
+msgstr ""
+
+#: setup/users/auth.php:39 setup/users/auth.php:143 setup/users/auth.php:174
+msgid "Xin chào, "
+msgstr ""
