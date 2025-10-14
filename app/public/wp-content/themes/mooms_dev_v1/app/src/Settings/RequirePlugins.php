@@ -21,11 +21,11 @@ class RequirePlugins
                 'force_deactivation' => true,
             ],
             [
-                'name' => 'WPS Hide Login',
-                'slug' => 'wps-hide-login',
-                'required' => true,
-                'force_activation' => true,
-                'force_deactivation' => true,
+                // 'name' => 'WPS Hide Login',
+                // 'slug' => 'wps-hide-login',
+                // 'required' => true,
+                // 'force_activation' => true,
+                // 'force_deactivation' => true,
             ],
         ];
 

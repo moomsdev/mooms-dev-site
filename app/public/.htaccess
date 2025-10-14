@@ -1,41 +1,4 @@
-RewriteEngine On
-RewriteBase /
-RewriteRule ^index\.php$ - [L]
-
-# add a trailing slash to /wp-admin
-RewriteRule ^wp-admin$ wp-admin/ [R=301,L]
-
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
-RewriteRule ^(wp-(content|admin|includes).*) $1 [L]
-RewriteRule ^(.*\.php)$ $1 [L]
-RewriteRule . index.php [L]
-
-# Security rules
-<Files wp-config.php>
-Order allow,deny
-Deny from all
-</Files>
-
-<Files .htaccess>
-Order allow,deny
-Deny from all
-</Files>
-
-# Disable directory browsing
-Options -Indexes
-
-# Protect sensitive files
-<FilesMatch "\.(log|sql|tar|gz|zip)$">
-Order allow,deny
-Deny from all
-</FilesMatch> 
-# BEGIN WordPress
-# The directives (lines) between "BEGIN WordPress" and "END WordPress" are
-# dynamically generated, and should only be modified via WordPress filters.
-# Any changes to the directives between these markers will be overwritten.
-<IfModule mod_rewrite.c>
+# BEGIN WordPress (Required for pretty permalinks)
 RewriteEngine On
 RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 RewriteBase /
@@ -43,6 +6,67 @@ RewriteRule ^index\.php$ - [L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.php [L]
-</IfModule>
-
 # END WordPress
+
+# BEGIN HTTPS Redirect (Only if your site is fully HTTPS)
+# Forces all traffic to HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# END HTTPS Redirect
+
+# BEGIN Fix mixed content warnings (Optional)
+# Auto-upgrade insecure http assets to https
+<IfModule mod_headers.c>
+    Header always set Content-Security-Policy "upgrade-insecure-requests;"
+</IfModule>
+# END Fix mixed content warnings
+
+# BEGIN Hardening - Block sensitive WP internals
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+    # Block direct access to admin includes
+    RewriteRule ^wp-admin/includes/ - [F,L]
+    # Protect core include PHP files
+    RewriteRule !^wp-includes/ - [S=3]
+    RewriteRule ^wp-includes/[^/]+\.php$ - [F,L]
+    RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,L]
+    RewriteRule ^wp-includes/theme-compat/ - [F,L]
+</IfModule>
+# END Hardening - Block sensitive WP internals
+
+# BEGIN Hardening - Protect config and control files
+<Files "wp-config.php">
+    Require all denied
+</Files>
+
+# Block xmlrpc.php entirely (uncomment only if you DO NOT use XML-RPC/Jetpack)
+# <Files xmlrpc.php>
+#   Require all denied
+# </Files>
+
+<Files .htaccess>
+    Require all denied
+</Files>
+
+# Hide readme/license to reduce info leakage
+<FilesMatch "^(README\.md|license\.txt)$">
+    Require all denied
+</FilesMatch>
+# END Hardening - Protect config and control files
+
+# BEGIN Block author pages to reduce username enumeration (Optional)
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_URI} ^/author/(.*)$
+RewriteRule .* - [R=403,L]
+# END Block author pages
+
+# BEGIN Block common spam bots (Optional; expand as needed)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_USER_AGENT} "DotBot|CensysInspect|ZoominfoBot|Barkrowler|HomeNet|Custom-AsyncHttpClient|curl|zgrab|python-requests" [NC]
+    RewriteRule .* - [R=410,L]
+</IfModule>
+# END Block common spam bots

@@ -3,7 +3,7 @@
 use Carbon_Fields\Block;
 use Carbon_Fields\Field;
 
-Block::make(__('Block Service', 'mms'))
+Block::make(__('Block SERVICE', 'mms'))
     ->add_fields([
         Field::make('separator', 'service_section', __('BLOCK SERVICE', 'mms')),
         Field::make('text', 'service_title', __('', 'mms'))

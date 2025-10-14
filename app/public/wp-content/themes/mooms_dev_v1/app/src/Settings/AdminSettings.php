@@ -71,8 +71,9 @@ class AdminSettings
 		});
 
 		add_action('wp_ajax_mm_get_attachment_url_thumbnail', static function () {
-			$url          = '';
+			$url = '';
 			$attachmentID = isset($_REQUEST['attachmentID']) ? $_REQUEST['attachmentID'] : '';
+
 			if ($attachmentID) {
 				$url = wp_get_attachment_url($attachmentID);
 				wp_send_json_success(['url' => $url]);
@@ -758,20 +759,6 @@ class AdminSettings
 				Field::make('html', 'enable_performance_monitoring_desc')
 					->set_width(70)
 					->set_html('<i class="fa-regular fa-lightbulb-on"></i> Giám sát hiệu suất, phát hiện bất thường.'),
-			]);
-			
-			Container::make('theme_options', __('Login Socials', 'mms'))
-			->set_page_parent($options)
-			->set_page_file(__('mms-login-socials', 'mms'))
-			->add_tab(__('Google', 'mms'), [
-				Field::make('checkbox', 'enable_login_google', __('Bật Login Google', 'mms')),
-				Field::make('text', 'google_client_id', __('Client ID', 'mms'))
-					->set_width(50),
-				Field::make('text', 'google_client_secret', __('Client Secret', 'mms'))
-					->set_width(50),
-				Field::make('text', 'google_redirect_uri', __('Redirect URI', 'mms'))
-					->set_attribute('readOnly', true)
-					->set_default_value(home_url('/wp-admin/admin-ajax.php?action=social_login_callback&driver=google')),
 			]);
 		});
 	}

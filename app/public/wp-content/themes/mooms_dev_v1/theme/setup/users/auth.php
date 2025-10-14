@@ -182,18 +182,3 @@ function googleAdminCallback() {
         exit;
     }
 }
-
-/**
- * Thêm nút đăng nhập Google vào trang login
- */
-add_action('login_form', function () {
-    // Lấy URL để bắt đầu quá trình đăng nhập Google
-    $google_login_url = admin_url('admin-ajax.php?action=google_login&redirect_to=' . urlencode(admin_url('admin-ajax.php?action=google_admin_callback')));
-    ?>
-    <div style="margin-bottom: 16px; text-align: center;">
-        <a href="<?php echo esc_url($google_login_url); ?>" class="button button-primary" style="background: #db4437; border-color: #db4437; color: #fff; width: 100%;">
-            Đăng nhập bằng Google (Admin)
-        </a>
-    </div>
-    <?php
-});
