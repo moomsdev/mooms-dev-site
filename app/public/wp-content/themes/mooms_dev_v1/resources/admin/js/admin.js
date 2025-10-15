@@ -90,7 +90,7 @@ jQuery(function () {
   });
 });
 
-
+// Xử lý hiển thị/ẩn password
 document.addEventListener('DOMContentLoaded', function () {
   // Tìm trường password bằng thuộc tính data-field
   const passwordField = document.querySelector('input[data-field="password-field"]');

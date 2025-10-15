@@ -111,12 +111,16 @@ class AdminSettings
 
 	public function addDashboardContactWidget()
 	{
-		add_action('wp_dashboard_setup', static function () {
-			wp_add_dashboard_widget('custom_help_widget', 'Giới thiệu', static function () { ?>
+		$my_theme   = wp_get_theme();
+		$theme_name = str_replace('/theme', '', $my_theme->get_stylesheet());
+		$theme_path = str_replace('wp-content/themes/'. $theme_name .'/theme', 'wp-content/themes/' . $theme_name . '/', $my_theme->get_template_directory_uri());
+
+		add_action('wp_dashboard_setup', static function () use ($theme_path) {
+			wp_add_dashboard_widget('custom_help_widget', 'Giới thiệu', static function () use ($theme_path) { ?>
 				<div style="position: relative;">
 					<div style="text-align:center">
 						<a target="_blank" href="<?php echo AUTHOR['website'] ?>" title="<?php echo AUTHOR['name'] ?>">
-							<img style="width:100%" src="<?php echo get_site_url() . '/wp-content/themes/mooms_dev/resources/images/dev/moomsdev-black.png' ?>" alt="<?php echo AUTHOR['name'] ?>" title="<?php echo AUTHOR['name'] ?>">
+							<img style="width:100%" src="<?php echo $theme_path . '/resources/images/dev/moomsdev-black.png' ?>" alt="<?php echo AUTHOR['name'] ?>" title="<?php echo AUTHOR['name'] ?>">
 						</a>
 					</div>
 					<h2 style="text-align:center;"><?php echo AUTHOR['name'] ?></h2>
@@ -185,6 +189,10 @@ class AdminSettings
 
 	public function customizeAdminBar()
 	{
+		$my_theme = wp_get_theme();
+		$theme_name = str_replace('/theme', '', $my_theme->get_stylesheet());
+		$theme_path = str_replace('wp-content/themes/'. $theme_name .'/theme', 'wp-content/themes/' . $theme_name . '/', $my_theme->get_template_directory_uri());
+
 		$author = AUTHOR;
 		add_action('wp_before_admin_bar_render', static function () use ($author) {
 			global $wp_admin_bar;
@@ -203,10 +211,10 @@ class AdminSettings
 			// $wp_admin_bar->remove_menu('my-account');       // Remove the user details tab
 		}, 7);
 
-		add_action('admin_bar_menu', static function ($wp_admin_bar) use ($author) {
+		add_action('admin_bar_menu', static function ($wp_admin_bar) use ($author, $theme_path) {
 			$args = [
 				'id'    => 'logo_author',
-				'title' => '<img src="' . get_site_url() . "/wp-content/themes/mooms_dev/resources/images/dev/moomsdev-white.png" . '" style="height: 1rem; padding-top:.3rem;" alt="' . AUTHOR['name'] . '">',
+				'title' => '<img src="' . $theme_path . "/resources/images/dev/icon.svg" . '" style="height: 1rem; padding-top:.3rem;" alt="' . AUTHOR['name'] . '">',
 				'href'  => $author['website'],
 				'meta'  => [
 					'target' => '_blank',
@@ -290,9 +298,46 @@ class AdminSettings
 
 	public function addCustomResources()
 	{
-		add_action('admin_enqueue_scripts', static function ($hook) {
+		$my_theme   = wp_get_theme();
+		$theme_name = str_replace('/theme', '', $my_theme->get_stylesheet());
+		$theme_path = str_replace('wp-content/themes/'. $theme_name .'/theme', 'wp-content/themes/' . $theme_name . '/', $my_theme->get_template_directory_uri());
+
+		add_action('admin_enqueue_scripts', static function ($hook) use ($theme_path) {
 			wp_enqueue_script('jquery_repeater', 'https://cdnjs.cloudflare.com/ajax/libs/jquery.repeater/1.2.1/jquery.repeater.min.js');
-			wp_enqueue_script('mm-custom-scripts', adminAsset('js/admin.js'));
+			wp_enqueue_script('theme-admin', $theme_path . '/dist/admin.js', ['jquery'], null, true);
+		});
+
+		add_action('wp_login', static function ($user_login, $user) {
+			update_user_meta($user->ID, '_show_admin_welcome', 'yes');
+		}, 10, 2);
+
+		//show welcome popup
+		add_action('admin_footer', static function () {
+			$current_user = wp_get_current_user();
+			if (!$current_user || empty($current_user->ID)) return;
+
+			$show = get_user_meta($current_user->ID, '_show_admin_welcome', true);
+			if ($show !== 'yes') return;
+
+			// Reset flag to show welcome popup only once
+			update_user_meta($current_user->ID, '_show_admin_welcome', 'no');
+			?>
+			<script>
+				// Wait for admin.js to load and expose Swal
+				(function checkSwal() {
+					if (typeof Swal !== 'undefined') {
+						Swal.fire({
+							icon: 'success',
+							title: '<?php echo esc_js(sprintf(__('Xin chào %s', 'mms'), $current_user->display_name ?: $current_user->user_login)); ?>',
+							showConfirmButton: false,
+							timer: 4000
+						});
+					} else {
+						setTimeout(checkSwal, 100);
+					}
+				})();
+			</script>
+			<?php
 		});
 	}
 
@@ -537,6 +582,9 @@ class AdminSettings
 						->set_attribute('type', 'password')
 						->set_attribute('data-field', 'password-field')
 						->set_default_value('utakxthdfibquxos'),
+				])
+				->add_tab(__('Google OAuth', 'mms'), [
+					Field::make('text', 'google_client_id', __('Client ID', 'mms')),
 				]);
 
 			Container::make('theme_options', __('Tools', 'mms'))

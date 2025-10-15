@@ -1,4 +1,5 @@
 @use "../theme/utilities/_variables.scss" as *;
+@use "../theme/utilities/_mixin.scss" as *;
 
 html {
   font-size: 62.5%;
@@ -13,6 +14,7 @@ body.login {
   background: linear-gradient(to bottom right, #50a3a2 0%, #53e3a6 100%);
 
   .language-switcher {
+    display: none;
     width: 100%;
 
     label {
@@ -23,30 +25,45 @@ body.login {
   #login {
     margin: 0 auto;
     padding: 20px !important;
-    width: 47rem;
-    max-width: 90%;
+    width: 100%;
+    max-width: 47rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
 
     .welcome {
       margin: 2.5rem auto;
-      font-size: clamp(2.5rem, 3vw, 3.7rem);
-      letter-spacing: 2px;
-      font-weight: 600;
-      color: #fff;
-      overflow: hidden;
-      white-space: nowrap;
-      border-right: 3px solid #fff;
       width: 0;
-      animation: typing 3.5s steps(22, end) forwards,
-        blink-caret 0.75s step-end infinite alternate;
+      text-align: center;
+      font-weight: 500;
+      color: #fff;
+      letter-spacing: 2px;
+      border-right: 3px solid #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      animation: typing-loop 8.6s steps(22, end) infinite, blink-caret 0.75s step-end infinite alternate;
+
+      @include resFont(2.5, 3.8, true);
     }
 
-    @keyframes typing {
-      from {
+    /*
+     * Typing to full width, hold, then reset to 0 to replay.
+     * 0% -> 40.7% (≈3.5s of 8.6s): typing to 100%
+     * 40.7% -> 98.8% (≈5s): hold at 100%
+     * 98.8% -> 100% (≈0.1s): reset to 0
+     */
+    @keyframes typing-loop {
+      0% {
         width: 0;
       }
-
-      to {
+      40.7% {
         width: 100%;
+      }
+      98.8% {
+        width: 100%;
+      }
+      100% {
+        width: 0;
       }
     }
 
@@ -66,15 +83,17 @@ body.login {
       color: #fff;
     }
 
-    h1 a {
+    h1{
       width: 100%;
-      height: 15rem;
-      max-width: 47rem;
-      background-image: url("~@images/dev/moomsdev-white.png") !important;
-      background-size: contain;
-      background-position: center;
-      outline: none;
-    }
+
+      a {
+        width: 100%;
+        background-image: url("~@images/dev/moomsdev-white.png") !important;
+        background-size: contain;
+        background-position: center;
+        outline: none;
+      }
+    } 
 
     form#loginform {
       padding: 0;
@@ -120,6 +139,7 @@ body.login {
         color: white;
 
         transition-duration: 0.25s;
+        font: normal normal 400 1.6rem $secondaryFont !important;
         font-weight: 300;
 
         &:hover {
@@ -129,11 +149,24 @@ body.login {
         &:focus {
           background-color: white;
           color: #53e3a6;
+
+          + button.wp-hide-pw {
+            color: #53e3a6;
+          }
         }
       }
 
       button.wp-hide-pw {
-        color: #53e3a6;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        color: #fff;
+
+        .dashicons {
+          width: 2rem;
+          height: 2rem;
+          top: 0;
+        }
       }
 
       p.forgetmenot {
@@ -145,16 +178,16 @@ body.login {
       }
 
       p.submit input#wp-submit {
-        padding: 0.5rem 3rem;
+        padding: 1rem 1.5rem;
         width: 100%;
         height: auto;
+        font: normal normal 400 1.6rem $secondaryFont !important;
         font-size: 1.6rem;
         font-weight: 500;
         background: #fff;
         color: #53e3a6;
         border: 1px solid white;
         border-radius: 2.4rem;
-        text-transform: uppercase;
         transition-duration: 0.25s;
         opacity: 1;
 
@@ -182,7 +215,7 @@ body.login {
         transition: all 0.25s linear;
 
         &:hover {
-          color: #424242;
+          text-decoration: underline;
         }
       }
     }
@@ -192,5 +225,64 @@ body.login {
     border: none !important;
     box-shadow: none !important;
     outline: none !important;
+  }
+
+  .google-login-container {
+    margin: 0 auto;
+  }
+  .google-login-divider {
+    margin: 0 0 10px;
+    position: relative;
+    text-align: center;
+
+    span {
+      background: transparent;
+      color: #fff;
+      text-transform: uppercase;
+      font-size: 1.6rem;
+    }
+
+    &::before {
+      content: none;
+    }
+  }
+
+  .google-login-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: #fff;
+    border: 1px solid #dadce0;
+    color: #3c4043;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    border-radius: 2.5rem;
+    font: normal normal 400 1.6rem $secondaryFont !important;
+
+    &:hover {
+      background: #f8f9fa;
+      border-color: #dadce0;
+      opacity: 0.7;
+    }
+
+    &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(66, 133, 244, 0.3);
+    }
+
+    svg {
+      flex-shrink: 0;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .google-login-btn {
+      font-size: 13px;
+      padding: 10px 14px;
+    }
   }
 }

@@ -210,7 +210,122 @@ Lưu ý: README có nhắc tới `dist/` (CSS/JS đã build, critical.css, sw.js
   - Đảm bảo `Intervention Image`/ext PHP hoạt động, tránh lỗi khi xử lý upload.
   - Đo Core Web Vitals thật (CrUX/field data) và theo dõi biến động sau mỗi thay đổi.
 
+## 6) Cập nhật đã thực hiện
+
+### 6.1. Chuẩn hóa API AJAX về JSON ✅
+
+**Đã hoàn thành:**
+
+- **File đã sửa:** `theme/setup/users/auth.php`
+- **Các hàm đã chuẩn hóa:**
+  - `mm_user_login()`: Trả JSON thay vì HTML script
+  - `mm_user_register()`: Trả JSON với validation đầy đủ
+  - `mm_user_reset_password()`: Triển khai đầy đủ chức năng reset password
+  - `googleLogin()`: Trả JSON cho Google OAuth
+  - `socialCallbackRedirectUrl()`: Trả JSON cho popup callback
+  - `googleAdminCallback()`: Trả JSON cho admin login
+
+**Cải tiến bảo mật:**
+- Sử dụng `sanitize_user()`, `sanitize_email()`, `is_email()` để validate input
+- HTTP status codes chuẩn (400, 401, 403, 404, 500)
+- Nonce verification với action riêng biệt cho từng chức năng
+- Escape output với `esc_url()`, `esc_html()`
+
+**Files mới tạo:**
+- `resources/scripts/theme/auth-handler.js`: JavaScript class xử lý API JSON
+- `resources/styles/auth-notifications.css`: CSS cho thông báo
+- `auth-demo.html`: Demo HTML với form mẫu
+
+**Cấu trúc JSON Response:**
+
+```json
+// Success
+{
+  "success": true,
+  "data": {
+    "message": "Đăng nhập thành công",
+    "user": {
+      "id": 123,
+      "email": "user@example.com", 
+      "display_name": "John Doe"
+    },
+    "redirect_to": "/",
+    "notification": {
+      "title": "Xin chào, user@example.com",
+      "message": "Chúc mừng bạn đã đăng nhập thành công"
+    }
+  }
+}
+
+// Error
+{
+  "success": false,
+  "data": {
+    "message": "Tài khoản hoặc mật khẩu không đúng"
+  }
+}
+```
+
+**Lợi ích:**
+- API chuẩn REST, dễ tích hợp với frontend framework
+- Giảm payload, tăng tốc độ xử lý
+- Dễ debug và monitor
+- Tương thích với caching và CDN
+- Hỗ trợ error handling tốt hơn
+
 ---
 
-Nếu bạn cần, tôi có thể tiếp tục: (1) chuẩn hóa API AJAX về JSON, (2) thêm/bật quy trình build để tạo `dist/` (critical CSS, SW), (3) ràng buộc resize ảnh theo option, và (4) tinh chỉnh security headers/resource hints theo hạ tầng thực tế. Hãy xác nhận mục nào bạn muốn thực hiện trước.
+### 6.2. Tích hợp Google OAuth Login vào trang wp-login.php ✅
+
+**Đã hoàn thành:**
+
+- **File đã sửa:** `app/src/Settings/CustomLoginPage.php`
+- **Files mới tạo:**
+  - `resources/admin/js/login.js`: JavaScript xử lý Google login
+  - `resources/admin/css/login.css`: CSS cho nút Google login
+  - `GOOGLE_OAUTH_SETUP.md`: Hướng dẫn cấu hình chi tiết
+
+**Tính năng đã thêm:**
+- Nút "Đăng nhập với Google" xuất hiện trên `/wp-login.php`
+- Tự động tạo user mới nếu chưa tồn tại
+- Lưu Google ID và avatar vào user meta
+- Xử lý callback OAuth hoàn chỉnh
+- Hiển thị thông báo lỗi/thành công
+- Responsive design cho mobile
+
+**Cách hoạt động:**
+1. User click "Đăng nhập với Google" trên `/wp-login.php`
+2. JavaScript gọi AJAX endpoint `google_login`
+3. Server trả về Google OAuth URL
+4. Browser redirect đến Google xác thực
+5. Google redirect về callback với code
+6. Server xử lý callback, tạo/tìm user, đăng nhập
+7. Redirect về trang đích
+
+**Cấu hình cần thiết:**
+```php
+// wp-config.php
+define('GOOGLE_CLIENT_ID', 'your_client_id');
+define('GOOGLE_CLIENT_SECRET', 'your_client_secret');
+define('GOOGLE_REDIRECT_URI', 'https://yourdomain.com/wp-admin/admin-ajax.php?action=google_login');
+```
+
+**Lợi ích:**
+- User experience tốt hơn với 1-click login
+- Giảm friction trong quá trình đăng ký/đăng nhập
+- Tự động sync thông tin từ Google
+- Bảo mật cao với OAuth 2.0
+- Tương thích với WordPress login flow
+
+---
+
+**Các mục tiếp theo có thể thực hiện:**
+- (2) Thiết lập quy trình build để tạo `dist/` (critical CSS, service worker)
+- (3) Ràng buộc resize ảnh theo option `max_width/max_height`
+- (4) Tinh chỉnh security headers/resource hints theo hạ tầng thực tế
+- (5) Tối ưu database queries và caching
+- (6) Implement rate limiting cho API auth
+- (7) Thêm social login khác (Facebook, GitHub, etc.)
+
+Hãy xác nhận mục nào bạn muốn thực hiện tiếp theo.
 
