@@ -70,6 +70,30 @@ function app_action_theme_enqueue_assets()
     Assets::enqueueStyle('theme-styles', get_template_directory_uri() . '/style.css');
 
     /**
+     * Inline Critical CSS nếu tồn tại (dist/critical/*.css)
+     */
+    add_action('wp_head', static function () use ($template_dir) {
+        $critical_candidates = [];
+        if (is_front_page() || is_home()) {
+            $critical_candidates[] = get_template_directory() . '/dist/critical/home.css';
+        }
+        if (is_singular()) {
+            $critical_candidates[] = get_template_directory() . '/dist/critical/single.css';
+        }
+        $critical_candidates[] = get_template_directory() . '/dist/critical/common.css';
+
+        foreach ($critical_candidates as $path) {
+            if (file_exists($path)) {
+                $css = file_get_contents($path);
+                if (!empty($css)) {
+                    echo '<style id="critical-css">' . $css . '</style>';
+                    break; // inline 1 file phù hợp đầu tiên
+                }
+            }
+        }
+    }, 1);
+
+    /**
      * Localize script with minimal data
      */
     wp_localize_script('theme-js-bundle', 'themeData', [
@@ -310,3 +334,47 @@ add_filter('wp_resource_hints', function ($hints, $relation_type) {
 
 // Hook vào action để enqueue assets thông qua function có sẵn thay vì thêm action mới
 add_action('wp_enqueue_scripts', 'app_action_theme_enqueue_assets');
+
+/**
+ * Thêm manifest vào head nếu tồn tại
+ */
+add_action('wp_head', static function () {
+    // Ưu tiên manifest trong dist/, nếu không có thì dùng bản nguồn ở resources/pwa/
+    $dist_path = get_template_directory() . '/dist/manifest.json';
+    $dist_uri  = get_template_directory_uri() . '/dist/manifest.json';
+    $src_path  = get_template_directory() . '/resources/pwa/manifest.json';
+    $src_uri   = get_template_directory_uri() . '/resources/pwa/manifest.json';
+
+    if (file_exists($dist_path)) {
+        echo '<link rel="manifest" href="' . esc_url($dist_uri) . '">';
+        echo '<meta name="theme-color" content="#111">';
+        return;
+    }
+
+    if (file_exists($src_path)) {
+        echo '<link rel="manifest" href="' . esc_url($src_uri) . '">';
+        echo '<meta name="theme-color" content="#111">';
+    }
+}, 2);
+
+/**
+ * Đăng ký Service Worker ở footer nếu tồn tại
+ */
+add_action('wp_footer', static function () {
+    // Ưu tiên SW ở dist/, fallback sang resources/pwa/ khi dev
+    $dist_path = get_template_directory() . '/dist/sw.js';
+    $dist_uri  = get_template_directory_uri() . '/dist/sw.js';
+    $src_path  = get_template_directory() . '/resources/pwa/sw.js';
+    $src_uri   = get_template_directory_uri() . '/resources/pwa/sw.js';
+
+    $sw_uri = '';
+    if (file_exists($dist_path)) {
+        $sw_uri = $dist_uri;
+    } elseif (file_exists($src_path)) {
+        $sw_uri = $src_uri;
+    }
+
+    if ($sw_uri) {
+        echo '<script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("' . esc_js($sw_uri) . '");});}</script>';
+    }
+}, 100);
