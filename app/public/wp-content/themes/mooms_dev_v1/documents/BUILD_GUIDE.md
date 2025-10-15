@@ -17,14 +17,37 @@
 }
 ```
 
-## 3) Quy trình build
-1) Split cấu hình dev/prod trong Webpack
-2) Bật contenthash cho filename
-3) Dùng Workbox để precache và runtime cache
-4) Dùng Critical hoặc Critters để inline above-the-fold CSS
-5) Generate `manifest.json` và copy icons
+## 3) Quy trình build (chi tiết)
+1) Webpack production
+- Bật `contenthash` cho filename (cache-busting)
+- Xuất `manifest.json` (mapping tên file)
 
-## 4) Tác vụ NPM gợi ý
+2) Critical CSS
+- Dùng `critical` CLI hoặc plugin webpack để tạo `dist/critical/home.css`, `dist/critical/single.css`...
+- Vị trí chèn: `theme/header.php` → inline CSS theo điều kiện page type.
+
+3) Service Worker (Workbox)
+- Generate `dist/sw.js` với precache manifest + runtime caching (images, fonts, CSS/JS)
+- Đăng ký SW: `theme/footer.php` (chỉ PRODUCTION)
+```html
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/wp-content/themes/mooms_dev_v1/dist/sw.js');
+  });
+}
+</script>
+```
+
+4) Manifest & Icons
+- Tạo `dist/manifest.json` và icons 192/512.
+- Chèn `<link rel="manifest" href="/wp-content/themes/mooms_dev_v1/dist/manifest.json">` trong `header.php`.
+
+5) Enqueue assets từ manifest
+- Vị trí: `app/src/Settings/AdminSettings.php` hoặc `theme/setup/assets.php` (theo chuẩn dự án)
+- Đọc `manifest.json` để enqueue đúng path hashed.
+
+## 4) Scripts NPM gợi ý
 ```json
 {
   "scripts": {
@@ -37,17 +60,12 @@
 }
 ```
 
-## 5) Tích hợp WordPress
-- Enqueue assets đọc từ `manifest.json`
-- Inline critical CSS trong `header.php`
-- Đăng ký service worker trong `footer.php` (chỉ production)
+## 5) Kiểm thử
+- Lighthouse (Performance, Best Practices, SEO, PWA)
+- Test offline (đóng mạng) → trang vẫn mở từ cache với SW
+- Kiểm tra header Preload/Resource Hints không cảnh báo
 
-## 6) Kiểm thử
-- Lighthouse (Performance, PWA)
-- Kiểm tra offline mode
-- Check preload/preconnect warnings
-
-## 7) Kỳ vọng sau build
+## 6) Kỳ vọng sau build
 - LCP/TBT/TTI cải thiện đáng kể
 - PageSpeed đạt 90+ (desktop & mobile)
 - Hỗ trợ offline cơ bản và A2HS (Add to Home Screen)
