@@ -474,6 +474,9 @@ function showGoogleLoginErrors($errors) {
         $error_code = sanitize_text_field($_GET['error']);
         
         switch ($error_code) {
+            case 'pending_approval':
+                $errors .= '<br>' . __('Tài khoản của bạn đang chờ quản trị viên duyệt. Vui lòng thử lại sau.', 'mms');
+                break;
             case 'invalid_state':
                 $errors .= '<br>' . __('Lỗi xác thực Google. Vui lòng thử lại.', 'mms');
                 break;
@@ -492,4 +495,136 @@ function showGoogleLoginErrors($errors) {
     }
     
     return $errors;
+}
+
+/**
+ * Admin: Hiển thị trạng thái duyệt tài khoản và checkbox duyệt trên trang hồ sơ user
+ */
+add_action('show_user_profile', 'mms_google_pending_approval_field');
+add_action('edit_user_profile', 'mms_google_pending_approval_field');
+function mms_google_pending_approval_field($user)
+{
+    if (!current_user_can('manage_options')) {
+        return;
+    }
+
+    $pending = get_user_meta($user->ID, '_google_pending_approval', true) === 'yes';
+    $approved = !$pending;
+    ?>
+    <h3><?php _e('Google Account Approval', 'mms'); ?></h3>
+    <table class="form-table" role="presentation">
+        <tr>
+            <th><label for="mms_google_approved"><?php _e('Trạng thái', 'mms'); ?></label></th>
+            <td>
+                <label style="display: inline-flex; align-items: center; gap: 10px;">
+                    <input 
+                        type="checkbox" 
+                        id="mms_google_approved" 
+                        name="mms_google_approved" 
+                        value="1" 
+                        <?php checked($approved, true); ?>
+                        data-user-id="<?php echo esc_attr($user->ID); ?>"
+                        data-nonce="<?php echo wp_create_nonce('mms_approve_user_' . $user->ID); ?>"
+                    >
+                    <span id="mms_approval_status" style="font-weight: 600;">
+                        <?php if ($approved): ?>
+                            <span style="color: #198754;"><?php _e('Đã duyệt', 'mms'); ?></span>
+                        <?php else: ?>
+                            <span style="color: #d63638;"><?php _e('Chờ duyệt', 'mms'); ?></span>
+                        <?php endif; ?>
+                    </span>
+                </label>
+            </td>
+        </tr>
+    </table>
+    <script>
+    jQuery(document).ready(function($) {
+        $('#mms_google_approved').on('change', function() {
+            const checkbox = $(this);
+            const userId = checkbox.data('user-id');
+            const nonce = checkbox.data('nonce');
+            const isChecked = checkbox.is(':checked');
+            const statusSpan = $('#mms_approval_status');
+            
+            // Disable checkbox while processing
+            checkbox.prop('disabled', true);
+            
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'mms_toggle_user_approval',
+                    user_id: userId,
+                    approve: isChecked ? '1' : '0',
+                    nonce: nonce
+                },
+                success: function(response) {
+                    if (response.success) {
+                        if (isChecked) {
+                            statusSpan.html('<span style="color: #198754;"><?php _e('Đã duyệt', 'mms'); ?></span>');
+                        } else {
+                            statusSpan.html('<span style="color: #d63638;"><?php _e('Chờ duyệt', 'mms'); ?></span>');
+                        }
+                    } else {
+                        alert(response.data || '<?php _e('Có lỗi xảy ra', 'mms'); ?>');
+                        // Revert checkbox state
+                        checkbox.prop('checked', !isChecked);
+                    }
+                },
+                error: function() {
+                    alert('<?php _e('Có lỗi xảy ra', 'mms'); ?>');
+                    // Revert checkbox state
+                    checkbox.prop('checked', !isChecked);
+                },
+                complete: function() {
+                    checkbox.prop('disabled', false);
+                }
+            });
+        });
+    });
+    </script>
+    <?php
+}
+
+/**
+ * AJAX Handler: Toggle user approval status
+ */
+add_action('wp_ajax_mms_toggle_user_approval', 'mms_toggle_user_approval');
+function mms_toggle_user_approval()
+{
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error(__('Bạn không có quyền thực hiện thao tác này.', 'mms'));
+    }
+
+    $user_id = isset($_POST['user_id']) ? intval($_POST['user_id']) : 0;
+    $approve = isset($_POST['approve']) && $_POST['approve'] === '1';
+    $nonce = $_POST['nonce'] ?? '';
+
+    if (!$user_id || !wp_verify_nonce($nonce, 'mms_approve_user_' . $user_id)) {
+        wp_send_json_error(__('Yêu cầu không hợp lệ.', 'mms'));
+    }
+
+    $user = get_user_by('id', $user_id);
+    if (!$user) {
+        wp_send_json_error(__('User không tồn tại.', 'mms'));
+    }
+
+    if ($approve) {
+        // Duyệt tài khoản: xóa meta pending
+        delete_user_meta($user_id, '_google_pending_approval');
+        
+        // Gửi email thông báo cho user
+        @wp_mail(
+            $user->user_email, 
+            __('Tài khoản đã được duyệt', 'mms'), 
+            __('Tài khoản của bạn đã được quản trị viên duyệt. Bạn có thể đăng nhập bằng Google ngay bây giờ.', 'mms')
+        );
+        
+        wp_send_json_success(__('Đã duyệt tài khoản thành công.', 'mms'));
+    } else {
+        // Bỏ duyệt: gắn lại meta pending
+        update_user_meta($user_id, '_google_pending_approval', 'yes');
+        
+        wp_send_json_success(__('Đã chuyển về trạng thái chờ duyệt.', 'mms'));
+    }
 }
