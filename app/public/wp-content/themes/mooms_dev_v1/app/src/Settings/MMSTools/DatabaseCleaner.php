@@ -215,15 +215,17 @@ class DatabaseCleaner
             AND option_value < UNIX_TIMESTAMP()"
         );
         
+        // 6b. Delete transient keys không có timeout tương ứng (tránh subselect trực tiếp cùng bảng)
         $wpdb->query(
-            "DELETE FROM {$wpdb->options} 
-            WHERE option_name LIKE '_transient_%' 
-            AND option_name NOT LIKE '_transient_timeout_%'
-            AND option_name NOT IN (
-                SELECT REPLACE(option_name, '_timeout', '') 
-                FROM {$wpdb->options} 
+            "DELETE o FROM {$wpdb->options} o
+            LEFT JOIN (
+                SELECT REPLACE(option_name, '_timeout', '') AS t_key
+                FROM {$wpdb->options}
                 WHERE option_name LIKE '_transient_timeout_%'
-            )"
+            ) t ON o.option_name = t.t_key
+            WHERE o.option_name LIKE '_transient_%'
+            AND o.option_name NOT LIKE '_transient_timeout_%'
+            AND t.t_key IS NULL"
         );
         
         // 7. Optimize tables

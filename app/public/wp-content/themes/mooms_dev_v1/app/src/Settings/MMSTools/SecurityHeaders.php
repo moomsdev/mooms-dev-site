@@ -142,42 +142,20 @@ class SecurityHeaders
     {
         $policies = [];
 
-        // Camera
-        if (get_option('_permissions_camera') !== 'yes') {
-            $policies[] = "camera=()";
-        }
+        // Helper to build directive based on yes/no
+        $build = static function ($feature, $enabled) {
+            return $enabled === 'yes' ? sprintf('%s=(self)', $feature) : sprintf('%s=()', $feature);
+        };
 
-        // Microphone
-        if (get_option('_permissions_microphone') !== 'yes') {
-            $policies[] = "microphone=()";
-        }
+        $policies[] = $build('camera', get_option('_permissions_camera'));
+        $policies[] = $build('microphone', get_option('_permissions_microphone'));
+        $policies[] = $build('geolocation', get_option('_permissions_geolocation'));
+        $policies[] = $build('payment', get_option('_permissions_payment'));
+        $policies[] = $build('usb', get_option('_permissions_usb'));
+        $policies[] = 'fullscreen=(self)';
+        $policies[] = $build('autoplay', get_option('_permissions_autoplay'));
 
-        // Geolocation
-        if (get_option('_permissions_geolocation') !== 'yes') {
-            $policies[] = "geolocation=()";
-        }
-
-        // Payment
-        if (get_option('_permissions_payment') !== 'yes') {
-            $policies[] = "payment=()";
-        }
-
-        // USB
-        if (get_option('_permissions_usb') !== 'yes') {
-            $policies[] = "usb=()";
-        }
-
-        // Fullscreen (cho phép self)
-        $policies[] = "fullscreen=(self)";
-
-        // Autoplay
-        if (get_option('_permissions_autoplay') !== 'yes') {
-            $policies[] = "autoplay=()";
-        }
-
-        if (!empty($policies)) {
-            header("Permissions-Policy: " . implode(', ', $policies));
-        }
+        header('Permissions-Policy: ' . implode(', ', $policies));
     }
 }
 
