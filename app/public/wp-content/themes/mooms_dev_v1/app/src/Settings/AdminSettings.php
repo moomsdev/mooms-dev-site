@@ -807,6 +807,147 @@ class AdminSettings
 				Field::make('html', 'enable_performance_monitoring_desc')
 					->set_width(70)
 					->set_html('<i class="fa-regular fa-lightbulb-on"></i> Giám sát hiệu suất, phát hiện bất thường.'),
+			])
+			// Security Headers
+			->add_tab(__('Security Headers', 'mms'), [
+				Field::make('separator', 'security_headers_separator', __('HTTP Security Headers', 'mms')),
+				
+				// X-Frame-Options
+				Field::make('checkbox', 'enable_x_frame_options', __('Bật X-Frame-Options', 'mms'))
+					->set_width(30),
+				Field::make('html', 'x_frame_options_desc')
+					->set_width(70)
+					->set_html('<i class="fa-regular fa-lightbulb-on"></i> Ngăn site bị nhúng vào iframe (chống clickjacking). Giá trị: SAMEORIGIN'),
+				
+				// X-Content-Type-Options
+				Field::make('checkbox', 'enable_x_content_type_options', __('Bật X-Content-Type-Options', 'mms'))
+					->set_width(30),
+				Field::make('html', 'x_content_type_options_desc')
+					->set_width(70)
+					->set_html('<i class="fa-regular fa-lightbulb-on"></i> Ngăn browser đoán sai MIME type. Giá trị: nosniff'),
+				
+				// Referrer-Policy
+				Field::make('checkbox', 'enable_referrer_policy', __('Bật Referrer-Policy', 'mms'))
+					->set_width(30),
+				Field::make('html', 'referrer_policy_desc')
+					->set_width(70)
+					->set_html('<i class="fa-regular fa-lightbulb-on"></i> Kiểm soát thông tin referrer được gửi đi'),
+				
+				Field::make('select', 'referrer_policy_value', __('Referrer Policy Value', 'mms'))
+					->add_options([
+						'no-referrer' => 'No Referrer (Không gửi)',
+						'no-referrer-when-downgrade' => 'No Referrer When Downgrade',
+						'origin' => 'Origin Only',
+						'origin-when-cross-origin' => 'Origin When Cross-Origin',
+						'same-origin' => 'Same Origin',
+						'strict-origin' => 'Strict Origin',
+						'strict-origin-when-cross-origin' => 'Strict Origin When Cross-Origin (Khuyến nghị)',
+						'unsafe-url' => 'Unsafe URL'
+					])
+					->set_default_value('strict-origin-when-cross-origin')
+					->set_width(30),
+				
+				// HSTS
+				Field::make('separator', 'hsts_separator', __('Strict-Transport-Security (HSTS)', 'mms')),
+				Field::make('checkbox', 'enable_hsts', __('Bật HSTS', 'mms'))
+					->set_width(30),
+				Field::make('html', 'hsts_desc')
+					->set_width(70)
+					->set_html('<i class="fa-regular fa-lightbulb-on"></i> <b>CHỈ BẬT KHI ĐÃ CÓ SSL!</b> Bắt buộc HTTPS, ngăn downgrade attack.'),
+				
+				Field::make('text', 'hsts_max_age', __('HSTS Max Age (giây)', 'mms'))
+					->set_default_value('31536000')
+					->set_width(30)
+					->set_help_text('31536000 = 1 năm'),
+				
+				Field::make('checkbox', 'hsts_include_subdomains', __('Include Subdomains', 'mms'))
+					->set_width(30),
+				
+				Field::make('checkbox', 'hsts_preload', __('HSTS Preload', 'mms'))
+					->set_width(40)
+					->set_help_text('Đăng ký tại hstspreload.org'),
+				
+				// CSP
+				Field::make('separator', 'csp_separator', __('Content-Security-Policy (CSP)', 'mms')),
+				Field::make('checkbox', 'enable_csp', __('Bật CSP', 'mms'))
+					->set_width(30),
+				Field::make('html', 'csp_desc')
+					->set_width(70)
+					->set_html('<i class="fa-regular fa-lightbulb-on"></i> Ngăn XSS và injection attacks. <b>Test kỹ trước khi bật!</b>'),
+				
+				Field::make('select', 'csp_mode', __('CSP Mode', 'mms'))
+					->add_options([
+						'report-only' => 'Report Only (Test, không block)',
+						'enforce' => 'Enforce (Block vi phạm)'
+					])
+					->set_default_value('report-only')
+					->set_width(30),
+				
+				Field::make('textarea', 'csp_allowed_domains', __('Allowed Domains', 'mms'))
+					->set_help_text('Mỗi domain 1 dòng. VD: fonts.googleapis.com')
+					->set_default_value("fonts.googleapis.com\nfonts.gstatic.com\ncdnjs.cloudflare.com")
+					->set_rows(5),
+				
+				Field::make('checkbox', 'csp_allow_inline_scripts', __('Allow Inline Scripts', 'mms'))
+					->set_width(33.33)
+					->set_help_text("unsafe-inline (không an toàn)"),
+				
+				Field::make('checkbox', 'csp_allow_eval', __('Allow Eval', 'mms'))
+					->set_width(33.33)
+					->set_help_text("unsafe-eval (không an toàn)"),
+				
+				Field::make('checkbox', 'csp_allow_inline_styles', __('Allow Inline Styles', 'mms'))
+					->set_width(33.33)
+					->set_help_text("unsafe-inline cho CSS"),
+				
+				Field::make('text', 'csp_report_uri', __('Report URI', 'mms'))
+					->set_help_text('URL nhận CSP violation reports'),
+				
+				// Permissions-Policy
+				Field::make('separator', 'permissions_separator', __('Permissions-Policy', 'mms')),
+				Field::make('checkbox', 'enable_permissions_policy', __('Bật Permissions-Policy', 'mms'))
+					->set_width(30),
+				Field::make('html', 'permissions_desc')
+					->set_width(70)
+					->set_html('<i class="fa-regular fa-lightbulb-on"></i> Tắt các API nhạy cảm không dùng tới'),
+				
+				Field::make('checkbox', 'permissions_camera', __('Cho phép Camera', 'mms'))
+					->set_width(25),
+				Field::make('checkbox', 'permissions_microphone', __('Cho phép Microphone', 'mms'))
+					->set_width(25),
+				Field::make('checkbox', 'permissions_geolocation', __('Cho phép Geolocation', 'mms'))
+					->set_width(25),
+				Field::make('checkbox', 'permissions_payment', __('Cho phép Payment', 'mms'))
+					->set_width(25),
+				Field::make('checkbox', 'permissions_usb', __('Cho phép USB', 'mms'))
+					->set_width(25),
+				Field::make('checkbox', 'permissions_autoplay', __('Cho phép Autoplay', 'mms'))
+					->set_width(25),
+			])
+			// Resource Hints
+			->add_tab(__('Resource Hints', 'mms'), [
+				Field::make('separator', 'resource_hints_separator', __('Tối ưu tải tài nguyên', 'mms')),
+				
+				Field::make('textarea', 'custom_preconnect_domains', __('Preconnect Domains', 'mms'))
+					->set_help_text('Critical domains (MAX 3). Mỗi domain 1 dòng. VD: cdn.yoursite.com')
+					->set_rows(3),
+				
+				Field::make('textarea', 'custom_dns_prefetch_domains', __('DNS-Prefetch Domains', 'mms'))
+					->set_help_text('Less critical domains. Mỗi domain 1 dòng. VD: www.google-analytics.com')
+					->set_rows(5),
+				
+				Field::make('html', 'resource_hints_info')
+					->set_html('<div style="padding: 15px; background: #f0f0f1; border-left: 4px solid #2271b1;">
+						<h3>📚 Hướng dẫn Resource Hints:</h3>
+						<ul>
+							<li><b>Preconnect:</b> Dùng cho 2-3 domains QUAN TRỌNG NHẤT (fonts, CDN chính). Thiết lập kết nối sớm.</li>
+							<li><b>DNS-Prefetch:</b> Dùng cho domains ít quan trọng hơn (analytics, social, ads).</li>
+							<li><b>Prefetch:</b> Tự động cho navigation (next/prev post, blog page).</li>
+						</ul>
+						<p><b>Lưu ý:</b> Chỉ nhập domain, KHÔNG có https:// hay //</p>
+						<p><b>Ví dụ đúng:</b> fonts.gstatic.com</p>
+						<p><b>Ví dụ sai:</b> https://fonts.gstatic.com</p>
+					</div>'),
 			]);
 		});
 	}

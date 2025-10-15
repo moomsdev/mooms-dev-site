@@ -243,21 +243,66 @@ add_filter('style_loader_tag', function ($tag, $handle, $href) {
 
 /**
  * Enhanced resource hints for performance
+ * Optimized: preconnect (critical, max 3), dns-prefetch (less critical), prefetch (navigation)
  */
 add_filter('wp_resource_hints', function ($hints, $relation_type) {
+    // Preconnect: Chỉ cho critical origins (MAX 3 để tránh overhead)
     if ('preconnect' === $relation_type) {
-        $hints[] = 'https://fonts.gstatic.com';
-        $hints[] = 'https://ajax.googleapis.com';
+        // Google Fonts (critical nếu dùng)
+        $hints[] = [
+            'href' => 'https://fonts.gstatic.com',
+            'crossorigin' => 'anonymous'
+        ];
+        
+        // Thêm từ options nếu admin config
+        $custom_preconnect = get_option('_custom_preconnect_domains', '');
+        if (!empty($custom_preconnect)) {
+            $domains = array_filter(array_map('trim', explode("\n", $custom_preconnect)));
+            foreach (array_slice($domains, 0, 2) as $domain) { // Max 2 thêm
+                $hints[] = [
+                    'href' => 'https://' . $domain,
+                    'crossorigin' => 'anonymous'
+                ];
+            }
+        }
     }
 
+    // DNS-Prefetch: Cho less critical domains
     if ('dns-prefetch' === $relation_type) {
-        $hints[] = '//fonts.googleapis.com';
-        $hints[] = '//cdnjs.cloudflare.com';
+        $dns_domains = [
+            '//fonts.googleapis.com',
+            '//cdnjs.cloudflare.com',
+        ];
+        
+        // Thêm từ options
+        $custom_dns = get_option('_custom_dns_prefetch_domains', '');
+        if (!empty($custom_dns)) {
+            $domains = array_filter(array_map('trim', explode("\n", $custom_dns)));
+            foreach ($domains as $domain) {
+                $dns_domains[] = '//' . $domain;
+            }
+        }
+        
+        $hints = array_merge($hints, $dns_domains);
     }
 
-    if ('prefetch' === $relation_type && (is_home() || is_front_page())) {
-        // Prefetch likely next pages
-        $hints[] = get_permalink(get_option('page_for_posts'));
+    // Prefetch: Likely navigation targets
+    if ('prefetch' === $relation_type) {
+        if (is_home() || is_front_page()) {
+            // Prefetch blog page
+            $blog_page_id = get_option('page_for_posts');
+            if ($blog_page_id) {
+                $hints[] = get_permalink($blog_page_id);
+            }
+        }
+        
+        if (is_singular()) {
+            // Prefetch next/prev post
+            $next_post = get_next_post();
+            if ($next_post) {
+                $hints[] = get_permalink($next_post->ID);
+            }
+        }
     }
 
     return $hints;

@@ -38,6 +38,7 @@ new \App\Settings\ThemeSettings();
 new \App\Settings\MMSTools\Optimize();
 new \App\Settings\MMSTools\OptimizeImages();
 new \App\Settings\MMSTools\Security();
+new \App\Settings\MMSTools\SecurityHeaders();
 
 // phpcs:disable
 /**
