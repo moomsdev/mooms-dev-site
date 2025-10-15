@@ -138,12 +138,12 @@ function app_action_login_enqueue_assets()
     /**
      * Enqueue scripts.
      */
-    Assets::enqueueScript(
-        'theme-login-js-bundle',
-        $template_dir . '/dist/login.js',
-        ['jquery'],
-        true
-    );
+    // Assets::enqueueScript(
+    //     'theme-login-js-bundle',
+    //     $template_dir . '/dist/login.js',
+    //     ['jquery'],
+    //     true
+    // );
 
     /**
      * Enqueue styles.

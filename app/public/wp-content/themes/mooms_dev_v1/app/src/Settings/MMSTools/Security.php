@@ -44,7 +44,8 @@ class Security
         }
 
         if (get_option('_enable_optimize_sql_queries') === 'yes') {
-            $this->optimizeSqlQueries();
+            // Hook vào filter 'query' để nhận tham số $query đúng cách thay vì gọi trực tiếp
+            add_filter('query', [$this, 'optimizeSqlQueries']);
         }
 
         if (get_option('_enable_optimize_memory_usage') === 'yes') {
@@ -77,7 +78,7 @@ class Security
 
             // Check if the user is logged in
             if ( ! is_user_logged_in() ) {
-                return new WP_Error( 'rest_not_logged_in',  __('You are not logged in', 'mms'), array( 'status' => 401 ) );
+                return new \WP_Error( 'rest_not_logged_in',  __('You are not logged in', 'mms'), array( 'status' => 401 ) );
             }
 
             return $result;
@@ -99,6 +100,16 @@ class Security
             remove_action('wp_head', 'wp_oembed_add_discovery_links');
             remove_action('wp_head', 'wp_oembed_add_host_js');
         });
+    }
+
+    /**
+     * Tắt WP-Cron (mang tính biểu trưng nếu define muộn). Khuyến nghị đặt trong wp-config.php.
+     */
+    public function disableWpCron()
+    {
+        if (!defined('DISABLE_WP_CRON')) {
+            define('DISABLE_WP_CRON', true);
+        }
     }
 
     public function disableXPingback()
@@ -125,7 +136,7 @@ class Security
         remove_action('wp_head', 'wp_shortlink_wp_head', 10);
         remove_action('wp_head', 'start_post_rel_link');
         remove_action('wp_head', 'index_rel_link');
-        remove_action('wp_head', 'parent_post_rel_link', 10, 0);
+        remove_action('wp_head', 'parent_post_rel_link');
         // Tối ưu heartbeat
         add_filter('heartbeat_settings', function ($settings) {
             $settings['interval'] = 120; // 2 phút thay vì 15 giây

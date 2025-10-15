@@ -37,14 +37,16 @@ html :where(.wp-block) {
     position: relative;
 }
 
-input[name="carbon_fields_compact_input[_smtp_password]"] {
-    max-width: 85%;
+input[name="carbon_fields_compact_input[_smtp_password]"],
+input[name="carbon_fields_compact_input[_google_client_secret]"] {
+    max-width: calc(100% - 5.5rem);
     display: inline-block;
 }
 
 button[data-toggle="password-toggle"] {
-    padding: 2px 2rem;
-    min-width: 12%;
+    padding: 2px 1rem;
+    width: 100%;
+    max-width: 5rem;
     display: inline-block;
     font-weight: 600;
     line-height: 2;

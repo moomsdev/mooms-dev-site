@@ -16,9 +16,13 @@ class CustomLoginPage
      */
     private function enqueueAssets()
     {
-        add_action('login_enqueue_scripts', static function () {
-            wp_enqueue_style('custom-login', adminAsset('css/login.css'));
-            wp_enqueue_script('custom-login', adminAsset('js/login.js'), ['jquery'], '1.0.0', true);
+        $my_theme   = wp_get_theme();
+        $theme_name = str_replace('/theme', '', $my_theme->get_stylesheet());
+        $theme_path = str_replace('wp-content/themes/'. $theme_name .'/theme', 'wp-content/themes/' . $theme_name . '/', $my_theme->get_template_directory_uri());
+
+        add_action('login_enqueue_scripts', static function () use ($theme_path) {
+            // wp_enqueue_style('custom-login', $theme_path . '/dist/styles/login.css');
+            wp_enqueue_script('custom-login', $theme_path . '/dist/login.js', ['jquery'], '1.0.0', true);
             
             // Localize script với ajaxurl
             wp_localize_script('custom-login', 'ajax_object', [
@@ -43,9 +47,11 @@ class CustomLoginPage
     public function addGoogleLoginButtonToForm()
     {
         // Chỉ hiển thị nếu đã cấu hình Google OAuth
-        $client_id = get_option('google_client_id');
-        
-        // Fallback: kiểm tra constants nếu option không có
+        // Ưu tiên lấy từ Carbon Fields (key có tiền tố _), sau đó tới key không tiền tố, cuối cùng là constants
+        $client_id = get_option('_google_client_id');
+        if (empty($client_id)) {
+            $client_id = get_option('_google_client_id');
+        }
         if (empty($client_id) && defined('GOOGLE_CLIENT_ID')) {
             $client_id = GOOGLE_CLIENT_ID;
         }

@@ -7,9 +7,9 @@ add_action('wp_ajax_user_login', 'mm_user_login');
 
 define('SOCIAL_DRIVER', [
     'google'   => [
-        'client_id'     => defined('GOOGLE_CLIENT_ID') ? GOOGLE_CLIENT_ID : get_option('google_client_id'),
-        'client_secret' => defined('GOOGLE_CLIENT_SECRET') ? GOOGLE_CLIENT_SECRET : get_option('google_client_secret'),
-        'redirect'      => defined('GOOGLE_REDIRECT_URI') ? GOOGLE_REDIRECT_URI : get_option('google_redirect_uri'),
+        'client_id'     => (get_option('_google_client_id') ?: get_option('_google_client_id') ?: (defined('GOOGLE_CLIENT_ID') ? GOOGLE_CLIENT_ID : '')),
+        'client_secret' => (get_option('_google_client_secret') ?: get_option('_google_client_secret') ?: (defined('GOOGLE_CLIENT_SECRET') ? GOOGLE_CLIENT_SECRET : '')),
+        'redirect'      => (get_option('_google_redirect_uri') ?: get_option('_google_redirect_uri') ?: (defined('GOOGLE_REDIRECT_URI') ? GOOGLE_REDIRECT_URI : '')),
     ],
 ]);
 function mm_user_login()
@@ -388,10 +388,10 @@ function handleGoogleOAuthCallback() {
         $user = get_user_by('email', $email);
         
         if (!$user) {
-            // Tạo user mới nếu chưa tồn tại
+            // Tạo user mới nếu chưa tồn tại (subscriber) nhưng yêu cầu admin duyệt trước khi cho login
             $username = sanitize_user($googleUser->getNickname() ?: explode('@', $email)[0]);
-            $username = wp_unique_username($username);
-            
+            $username = function_exists('wp_unique_username') ? wp_unique_username($username) : wp_unique_id($username . '_');
+
             $user_id = wp_insert_user([
                 'user_login' => $username,
                 'user_email' => $email,
@@ -399,23 +399,37 @@ function handleGoogleOAuthCallback() {
                 'user_pass' => wp_generate_password(),
                 'role' => 'subscriber'
             ]);
-            
+
             if (is_wp_error($user_id)) {
                 wp_redirect(wp_login_url() . '?error=user_creation_failed');
                 exit;
             }
-            
-            $user = get_user_by('id', $user_id);
-            
-            // Log user creation
-            error_log('Google OAuth - New user created: ' . $email . ' (ID: ' . $user_id . ')');
+
+            // Đánh dấu chờ duyệt
+            update_user_meta($user_id, '_google_pending_approval', 'yes');
+
+            // Gửi thông báo cho admin (tùy chọn)
+            $admin_email = get_option('admin_email');
+            if ($admin_email) {
+                @wp_mail($admin_email, __('Yêu cầu duyệt tài khoản mới', 'mms'), sprintf(__('Người dùng %s (%s) đăng ký qua Google. Vào admin để cấp quyền.', 'mms'), $name, $email));
+            }
+
+            // Không đăng nhập ngay, chuyển về trang login với thông báo
+            wp_redirect(wp_login_url() . '?error=pending_approval');
+            exit;
         }
-        
+
+        // Nếu user tồn tại nhưng đang chờ duyệt thì không cho đăng nhập
+        if (get_user_meta($user->ID, '_google_pending_approval', true) === 'yes') {
+            wp_redirect(wp_login_url() . '?error=pending_approval');
+            exit;
+        }
+
         // Lưu Google ID vào user meta
         update_user_meta($user->ID, '_google_id', $googleId);
         update_user_meta($user->ID, '_google_avatar', $googleUser->getAvatar());
-        
-        // Đăng nhập user
+
+        // Đăng nhập user (đã được duyệt)
         wp_set_current_user($user->ID);
         wp_set_auth_cookie($user->ID, true);
         
