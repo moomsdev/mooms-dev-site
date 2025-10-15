@@ -187,10 +187,9 @@ class AdminSettings
 		});
 	}
 
-	
 	public function customizeAdminBar()
 	{
-		$my_theme   = wp_get_theme();$my_theme   = wp_get_theme();
+		$my_theme = wp_get_theme();
 		$theme_name = str_replace('/theme', '', $my_theme->get_stylesheet());
 		$theme_path = str_replace('wp-content/themes/'. $theme_name .'/theme', 'wp-content/themes/' . $theme_name . '/', $my_theme->get_template_directory_uri());
 
@@ -305,17 +304,14 @@ class AdminSettings
 
 		add_action('admin_enqueue_scripts', static function ($hook) use ($theme_path) {
 			wp_enqueue_script('jquery_repeater', 'https://cdnjs.cloudflare.com/ajax/libs/jquery.repeater/1.2.1/jquery.repeater.min.js');
-	
-			// wp_enqueue_style('theme-admin', $theme_path . '/dist/styles/admin.css');
 			wp_enqueue_script('theme-admin', $theme_path . '/dist/admin.js', ['jquery'], null, true);
 		});
 
-		// Đánh dấu hiển thị welcome popup khi user đăng nhập (bất kỳ phương thức nào)
 		add_action('wp_login', static function ($user_login, $user) {
 			update_user_meta($user->ID, '_show_admin_welcome', 'yes');
 		}, 10, 2);
 
-		// Hiển thị welcome popup trong admin
+		//show welcome popup
 		add_action('admin_footer', static function () {
 			$current_user = wp_get_current_user();
 			if (!$current_user || empty($current_user->ID)) return;
@@ -323,11 +319,11 @@ class AdminSettings
 			$show = get_user_meta($current_user->ID, '_show_admin_welcome', true);
 			if ($show !== 'yes') return;
 
-			// Reset flag ngay để chỉ hiển thị 1 lần
+			// Reset flag to show welcome popup only once
 			update_user_meta($current_user->ID, '_show_admin_welcome', 'no');
 			?>
 			<script>
-				// Đợi admin.js load xong và expose Swal
+				// Wait for admin.js to load and expose Swal
 				(function checkSwal() {
 					if (typeof Swal !== 'undefined') {
 						Swal.fire({
