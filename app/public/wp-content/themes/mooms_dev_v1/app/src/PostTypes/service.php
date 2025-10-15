@@ -23,8 +23,8 @@ class service extends \App\Abstracts\AbstractPostType
         $this->menuIcon         = 'dashicons-admin-generic'; //https://developer.wordpress.org/resource/dashicons/
         // $this->menuIcon = get_template_directory_uri() . '/images/custom-icon.png';
         $this->post_type        = 'service';
-        $this->singularName     = $this->pluralName = __('Service', 'mms');
-        $this->titlePlaceHolder = __('Service', 'mms');
+        $this->singularName     = $this->pluralName = 'Service';
+        $this->titlePlaceHolder = 'Service';
         $this->slug             = 'services';
         parent::__construct();
     }
