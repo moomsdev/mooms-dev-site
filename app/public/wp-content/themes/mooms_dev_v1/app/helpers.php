@@ -24,6 +24,7 @@ require_once APP_APP_HELPERS_DIR . 'hooks.php';
 require_once APP_APP_HELPERS_DIR . 'template_tags.php';
 require_once APP_APP_HELPERS_DIR . 'woocommerce.php';
 require_once APP_APP_HELPERS_DIR . 'carbon_fields.php';
+require_once APP_APP_HELPERS_DIR . 'cache.php';
 require_once APP_APP_SETUP_DIR . 'assets.php';
 require_once APP_APP_SETUP_DIR . 'users/auth.php';
 
@@ -39,6 +40,7 @@ new \App\Settings\MMSTools\Optimize();
 new \App\Settings\MMSTools\OptimizeImages();
 new \App\Settings\MMSTools\Security();
 new \App\Settings\MMSTools\SecurityHeaders();
+new \App\Settings\MMSTools\DatabaseCleaner();
 
 // phpcs:disable
 /**
