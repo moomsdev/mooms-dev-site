@@ -72,16 +72,38 @@ class Security
     public function disableRestApi()
     {
         add_filter( 'rest_authentication_errors', function( $result ) {
+            // Nếu đã có lỗi hoặc đã authenticated, giữ nguyên
             if ( true === $result || is_wp_error( $result ) ) {
                 return $result;
             }
 
-            // Check if the user is logged in
-            if ( ! is_user_logged_in() ) {
-                return new \WP_Error( 'rest_not_logged_in',  __('You are not logged in', 'mms'), array( 'status' => 401 ) );
+            // QUAN TRỌNG: Cho phép admin và logged-in users
+            if ( is_user_logged_in() ) {
+                return $result;
             }
 
-            return $result;
+            // CHỈ block REST API cho anonymous users
+            // NHƯNG vẫn cho phép một số endpoints cần thiết
+            global $wp;
+            $current_route = $wp->query_vars['rest_route'] ?? '';
+            
+            // Whitelist: cho phép các endpoints này
+            $allowed_routes = [
+                '/wp/v2/types',
+                '/wp/v2/statuses', 
+                '/wp/v2/taxonomies',
+                '/wp/v2/users/me',
+                '/oembed/',
+            ];
+            
+            foreach ($allowed_routes as $allowed) {
+                if (strpos($current_route, $allowed) !== false) {
+                    return $result;
+                }
+            }
+
+            // Block các routes còn lại cho anonymous
+            return new \WP_Error( 'rest_not_logged_in',  __('You are not logged in', 'mms'), array( 'status' => 401 ) );
         });
     }
 
@@ -239,33 +261,36 @@ class Security
      */
     public function addPerformanceMonitoring()
     {
-        if (!is_admin()) {
-            ?>
-            <script>
-                if ('PerformanceObserver' in window) {
-                    new PerformanceObserver((entryList) => {
-                        for (const entry of entryList.getEntries()) {
-                            console.log('LCP:', entry.startTime);
-                        }
-                    }).observe({ type: 'largest-contentful-paint', buffered: true });
-                    new PerformanceObserver((entryList) => {
-                        for (const entry of entryList.getEntries()) {
-                            if (!entry.hadRecentInput) {
-                                console.log('CLS:', entry.value);
+        // QUAN TRỌNG: Phải dùng wp_footer hook, KHÔNG được output trực tiếp!
+        add_action('wp_footer', function () {
+            if (!is_admin()) {
+                ?>
+                <script>
+                    if ('PerformanceObserver' in window) {
+                        new PerformanceObserver((entryList) => {
+                            for (const entry of entryList.getEntries()) {
+                                console.log('LCP:', entry.startTime);
                             }
-                        }
-                    }).observe({ type: 'layout-shift', buffered: true });
-                    new PerformanceObserver((entryList) => {
-                        for (const entry of entryList.getEntries()) {
-                            console.log('FID:', entry.processingStart - entry.startTime);
-                        }
-                    }).observe({ type: 'first-input', buffered: true });
-                }
-                if ('performance' in window && 'mark' in performance) {
-                    performance.mark('theme-loaded');
-                }
-            </script>
-            <?php
-        }
+                        }).observe({ type: 'largest-contentful-paint', buffered: true });
+                        new PerformanceObserver((entryList) => {
+                            for (const entry of entryList.getEntries()) {
+                                if (!entry.hadRecentInput) {
+                                    console.log('CLS:', entry.value);
+                                }
+                            }
+                        }).observe({ type: 'layout-shift', buffered: true });
+                        new PerformanceObserver((entryList) => {
+                            for (const entry of entryList.getEntries()) {
+                                console.log('FID:', entry.processingStart - entry.startTime);
+                            }
+                        }).observe({ type: 'first-input', buffered: true });
+                    }
+                    if ('performance' in window && 'mark' in performance) {
+                        performance.mark('theme-loaded');
+                    }
+                </script>
+                <?php
+            }
+        }, 999);
     }
 }

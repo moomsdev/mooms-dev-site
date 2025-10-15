@@ -50,7 +50,7 @@ if (!defined('WP_POST_REVISIONS')) {
     define('WP_POST_REVISIONS', 5);
 }
 
-// 6. Tắt admin notices từ plugins (giảm requests)
+// 6. Tắt admin notices từ plugins (giảm requests) - COMMENTED vì gây lỗi
 add_action('admin_enqueue_scripts', function () {
     remove_all_actions('admin_notices');
     remove_all_actions('network_admin_notices');
