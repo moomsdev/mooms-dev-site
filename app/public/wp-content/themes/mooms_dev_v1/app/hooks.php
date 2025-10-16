@@ -54,6 +54,49 @@ if (version_compare(get_bloginfo('version'), '5.2', '<')) {
 add_filter('login_headertext', 'app_filter_login_headertext');
 
 /**
+ * Widgets: đảm bảo có ít nhất 1 sidebar được đăng ký
+ * Nếu theme chưa đăng ký sidebar nào, menu Widgets sẽ không hiển thị
+ */
+add_action('widgets_init', function () {
+    global $wp_registered_sidebars;
+    if (empty($wp_registered_sidebars) || !is_array($wp_registered_sidebars)) {
+        register_sidebar([
+            'name'          => __('Primary Sidebar', 'mms'),
+            'id'            => 'primary-sidebar',
+            'description'   => __('Default sidebar for widgets', 'mms'),
+            'before_widget' => '<section id="%1$s" class="widget %2$s">',
+            'after_widget'  => '</section>',
+            'before_title'  => '<h2 class="widget-title">',
+            'after_title'   => '</h2>',
+        ]);
+    }
+});
+
+/**
+ * Pages list table: thêm cột Thumbnail giống CPT
+ */
+add_filter('manage_page_posts_columns', function ($cols) {
+    if (is_array($cols)) {
+        $cols = insertArrayAtPosition($cols, ['featured_image' => 'Image'], 1);
+    }
+    return $cols;
+}, 9999);
+
+add_action('manage_page_posts_custom_column', function ($column, $postId) {
+    if ($column !== 'featured_image') {
+        return;
+    }
+    $thumbnailUrl = get_the_post_thumbnail_url($postId);
+    echo "<a href='javascript:' data-trigger-change-thumbnail-id data-post-id='{$postId}'>";
+    if ($thumbnailUrl) {
+        echo "<img src='" . esc_url($thumbnailUrl) . "' alt='' />";
+    } else {
+        echo "<div class='no-image-text'>Choose Image</div>";
+    }
+    echo "</a>";
+}, 10, 2);
+
+/**
  * ------------------------------------------------------------------------
  * External Libraries and Plugins.
  * ------------------------------------------------------------------------

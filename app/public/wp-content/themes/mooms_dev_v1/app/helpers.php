@@ -43,6 +43,11 @@ new \App\Settings\MMSTools\Security();
 new \App\Settings\MMSTools\SecurityHeaders();
 new \App\Settings\MMSTools\DatabaseCleaner();
 
+/**
+ * Load Admin UI Enhancements
+ */
+new \App\Admin\CustomDashboard();
+
 // phpcs:disable
 /**
  * Annoyed that you have to constantly add helper file require statements? Uncomment the bellow snippet!

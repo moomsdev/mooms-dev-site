@@ -126,3 +126,100 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
+
+// ===== Migrate logic from resources/scripts/admin/dashboard.js =====
+(function($) {
+    'use strict';
+
+    const MMSDashboard = {
+        init: function() {
+            this.bindEvents();
+            this.loadDashboardData();
+            this.initTooltips();
+        },
+        bindEvents: function() {
+            $(document).on('click', '.action-item', this.handleQuickAction);
+            $(document).on('click', '.refresh-stats', this.refreshStats);
+            $(document).on('click', '.health-item', this.showHealthDetails);
+        },
+        loadDashboardData: function() {
+            if (!$('body').hasClass('index-php')) return;
+            if (typeof mmsDashboard === 'undefined') return;
+            $.ajax({
+                url: mmsDashboard.ajaxurl,
+                type: 'POST',
+                data: { action: 'mms_get_dashboard_data', nonce: mmsDashboard.nonce },
+                success: function(response) {
+                    if (response && response.success) {
+                        MMSDashboard.updateDashboardData(response.data);
+                    }
+                }
+            });
+        },
+        updateDashboardData: function(data) {
+            if (data.stats) this.updateStats(data.stats);
+            if (data.activity) this.updateActivity(data.activity);
+            if (data.health) this.updateHealth(data.health);
+        },
+        updateStats: function(stats) {
+            Object.keys(stats).forEach(function(key) {
+                const $statNumber = $('.stat-item').eq(Object.keys(stats).indexOf(key)).find('.stat-number');
+                if ($statNumber.length) {
+                    $statNumber.text(stats[key]);
+                }
+            });
+        },
+        updateActivity: function(activity) {
+            // no-op for now
+        },
+        updateHealth: function(health) {
+            // no-op for now
+        },
+        handleQuickAction: function(e) {
+            const $this = $(this);
+            const action = $this.data('action');
+            if (!action) return;
+            e.preventDefault();
+            MMSDashboard.performQuickAction(action);
+        },
+        performQuickAction: function(action) {
+            if (typeof mmsDashboard === 'undefined') return;
+            $.ajax({
+                url: mmsDashboard.ajaxurl,
+                type: 'POST',
+                data: { action: 'mms_quick_action', quick_action: action, nonce: mmsDashboard.nonce },
+                beforeSend: function() { $('.action-item[data-action="' + action + '"]').addClass('mms-loading'); },
+                complete: function() { $('.action-item[data-action="' + action + '"]').removeClass('mms-loading'); }
+            });
+        },
+        refreshStats: function(e) {
+            e.preventDefault();
+            const $button = $(this);
+            $button.addClass('mms-loading');
+            MMSDashboard.loadDashboardData();
+            setTimeout(function() { $button.removeClass('mms-loading'); }, 1000);
+        },
+        showHealthDetails: function(e) {
+            const healthType = $(this).data('health-type');
+            if (!healthType) return;
+            e.preventDefault();
+        },
+        initTooltips: function() {
+            $('.stat-item, .action-item, .health-item').each(function() {
+                const $this = $(this);
+                const title = $this.attr('title');
+                if (title && typeof $this.tooltip === 'function') {
+                    $this.tooltip({ position: { my: 'left+15 center', at: 'right center' }, tooltipClass: 'mms-tooltip' });
+                }
+            });
+        }
+    };
+
+    $(document).ready(function() { MMSDashboard.init(); });
+    window.MMSDashboard = MMSDashboard;
+
+})(jQuery);
+
+// ===== Quick thumbnail picker for Pages (edit.php?post_type=page) =====
+// Note: Quick-change button near title removed; use click on the Image column box instead.
+
