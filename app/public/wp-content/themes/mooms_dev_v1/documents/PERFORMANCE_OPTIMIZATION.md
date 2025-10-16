@@ -259,3 +259,48 @@ chmod +x optimize.sh
 ./optimize.sh
 ```
 
+---
+
+## 11. 🎯 Tối ưu Admin Dashboard (MỚI)
+
+### Vấn đề hiện tại:
+- Admin load: **4.07s** (trung bình)
+- "Finish: 21 min" do **Heartbeat API** long-polling
+- **80 queries** (có thể giảm còn 30-40)
+
+### ✅ Đã tích hợp sẵn:
+File: `app/helpers/optimize-admin.php`
+
+**Các tối ưu:**
+1. ✅ Giảm Heartbeat từ 15s → 60s (Dashboard)
+2. ✅ Tắt Heartbeat ở trang Plugins/Themes/Users
+3. ✅ Tăng Auto-save từ 60s → 120s
+4. ✅ Tắt emoji scripts trong admin
+5. ✅ Giới hạn post revisions = 5
+6. ✅ Defer non-critical scripts (jQuery UI, Repeater)
+7. ✅ Preload admin-ajax.php
+8. ✅ Log slow admin requests (> 1s)
+
+### Kết quả mong đợi:
+```
+Admin Load: 4.07s → 1.5-2.5s ⚡
+Requests: 76 → 40-50 📉
+Memory: 48MB → 40MB 💾
+```
+
+### Kiểm tra sau khi tối ưu:
+1. Refresh trang admin (Ctrl+Shift+R)
+2. Mở Query Monitor → Overview
+3. Xem "Page Generation Time" giảm 40-50%
+
+### Nếu vẫn chậm:
+**Tắt hoàn toàn Heartbeat** (thêm vào `wp-config.php`):
+```php
+define('WP_DISABLE_HEARTBEAT', true);
+```
+
+**Lưu ý:** Sẽ mất tính năng:
+- Auto-lock khi nhiều user edit cùng 1 post
+- Real-time notifications
+- Dashboard activity widget
+
