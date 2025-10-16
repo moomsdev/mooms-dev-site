@@ -5,7 +5,7 @@
   "title": "Service Block",
   "category": "mms-blocks",
   "icon": "admin-tools",
-  "description": "Hiển thị danh sách dịch vụ từ custom post type Service",
+  "description": "Hiển thị danh sách dịch vụ từ Service",
   "attributes": {
     "title": { 
       "type": "string", 
