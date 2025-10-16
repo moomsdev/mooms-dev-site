@@ -30,9 +30,10 @@ class AdminSettings
 			$this->removeUnnecessaryMenus();
 		}
 
-		$this->addDashboardContactWidget();
-		$this->removeDefaultWidgets();
-		$this->removeDashboardWidgets();
+        $this->addDashboardContactWidget();
+        // TEMP DISABLED: tránh làm mất core widgets ở Appearance → Widgets
+        $this->removeDefaultWidgets();
+        $this->removeDashboardWidgets();
 		$this->changeHeaderUrl();
 		$this->changeHeaderTitle();
 		$this->changeFooterCopyright();
@@ -183,7 +184,7 @@ class AdminSettings
 	public function changeFooterCopyright()
 	{
 		add_filter('admin_footer_text', static function () {
-			echo '<a href="' . AUTHOR['website'] . '" target="_blank">' . AUTHOR['name'] . '</a> © ' . date('Y') . ' - All rights reserved';
+			echo '<a href="' . AUTHOR['website'] . '" target="_blank">' . AUTHOR['name'] . '</a> © ' . date('Y') . ' - Đi để code, Code để đi';
 		});
 	}
 
@@ -305,6 +306,11 @@ class AdminSettings
 		add_action('admin_enqueue_scripts', static function ($hook) use ($theme_path) {
 			wp_enqueue_script('jquery_repeater', 'https://cdnjs.cloudflare.com/ajax/libs/jquery.repeater/1.2.1/jquery.repeater.min.js');
 			wp_enqueue_script('theme-admin', $theme_path . '/dist/admin.js', ['jquery'], null, true);
+			// Localize for dashboard features (moved from dashboard.js)
+			wp_localize_script('theme-admin', 'mmsDashboard', [
+				'ajaxurl' => admin_url('admin-ajax.php'),
+				'nonce' => wp_create_nonce('mms_dashboard_nonce'),
+			]);
 		});
 
 		add_action('wp_login', static function ($user_login, $user) {

@@ -1,9 +1,4 @@
 <?php
-/**
- * Tối ưu tốc độ Admin Dashboard
- * Giảm long-polling, heartbeat, auto-save
- */
-
 // 1. Giảm tần suất Heartbeat API (từ 15s → 60s)
 add_filter('heartbeat_settings', function ($settings) {
     // Dashboard: 60s (thay vì 15s)
@@ -50,16 +45,21 @@ if (!defined('WP_POST_REVISIONS')) {
     define('WP_POST_REVISIONS', 5);
 }
 
-// 6. Tắt admin notices từ plugins (giảm requests) - COMMENTED vì gây lỗi
-add_action('admin_enqueue_scripts', function () {
-    remove_all_actions('admin_notices');
-    remove_all_actions('network_admin_notices');
-    remove_all_actions('all_admin_notices');
-    remove_all_actions('user_admin_notices');
-}, 0);
+// 6. Tắt admin notices từ plugins (giảm requests)
+// TẠM TẮT để tránh ẩn thông báo quan trọng và xung đột UI
+// add_action('admin_enqueue_scripts', function () {
+//     remove_all_actions('admin_notices');
+//     remove_all_actions('network_admin_notices');
+//     remove_all_actions('all_admin_notices');
+//     remove_all_actions('user_admin_notices');
+// }, 0);
 
 // 7. Defer non-critical admin scripts
 add_filter('script_loader_tag', function ($tag, $handle) {
+    // Không can thiệp script trong admin để tránh lỗi jQuery UI (a.widget is not a function)
+    if (is_admin()) {
+        return $tag;
+    }
     // Danh sách scripts có thể defer
     $defer_scripts = [
         'jquery-ui-core',
@@ -75,14 +75,6 @@ add_filter('script_loader_tag', function ($tag, $handle) {
     
     return $tag;
 }, 10, 2);
-
-// 8. Preload critical admin resources
-add_action('admin_head', function () {
-    ?>
-    <link rel="preload" href="<?php echo admin_url('admin-ajax.php'); ?>" as="fetch" crossorigin="anonymous">
-    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
-    <?php
-}, 1);
 
 // 9. Tối ưu admin menu queries
 add_action('admin_menu', function () {
@@ -111,5 +103,3 @@ add_action('shutdown', function () {
         ));
     }
 });
-
-
