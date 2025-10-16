@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 2,
+  "name": "mms/service",
+  "title": "Service Block",
+  "category": "mms-blocks",
+  "icon": "admin-tools",
+  "description": "Hiển thị danh sách dịch vụ từ custom post type Service",
+  "attributes": {
+    "title": { 
+      "type": "string", 
+      "default": "Our Services" 
+    },
+    "desc": { 
+      "type": "string", 
+      "default": "" 
+    },
+    "selectedServices": {
+      "type": "array",
+      "default": []
+    }
+  }
+}
+
+

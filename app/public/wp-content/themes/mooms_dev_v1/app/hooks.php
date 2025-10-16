@@ -54,6 +54,28 @@ if (version_compare(get_bloginfo('version'), '5.2', '<')) {
 add_filter('login_headertext', 'app_filter_login_headertext');
 
 /**
+ * Load Gutenberg blocks initialization
+ * Theo cách của timeline-block: mỗi block có init riêng
+ */
+$gutenberg_blocks_init = get_template_directory() . '/setup/blocks-gutenberg/init.php';
+if (file_exists($gutenberg_blocks_init)) {
+    require_once $gutenberg_blocks_init;
+}
+
+// Thêm category "Mooms Blocks" cho khung chèn block
+add_filter('block_categories_all', function($categories){
+    $custom = [
+        [
+            'slug' => 'mms-blocks',
+            'title' => __('Mooms Blocks', 'mms'),
+            'icon' => 'layout'
+        ]
+    ];
+    // Đưa category của chúng ta lên đầu
+    return array_merge($custom, $categories);
+}, 10, 1);
+
+/**
  * Widgets: đảm bảo có ít nhất 1 sidebar được đăng ký
  * Nếu theme chưa đăng ký sidebar nào, menu Widgets sẽ không hiển thị
  */

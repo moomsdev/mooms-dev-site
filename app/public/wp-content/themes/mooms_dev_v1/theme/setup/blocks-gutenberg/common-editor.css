@@ -1,0 +1,14 @@
+/**
+ * Common editor styles for all MMS Gutenberg blocks
+ */
+.wp-block[data-type^="mms/"] {
+    position: relative;
+}
+
+/* Placeholder styles */
+.wp-block[data-type^="mms/"] .components-placeholder {
+    min-height: 200px;
+    padding: 20px;
+}
+
+

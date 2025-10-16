@@ -1,0 +1,25 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 2,
+  "name": "mms/about-me",
+  "title": "About Me (Visual)",
+  "category": "mms-blocks",
+  "icon": "admin-users",
+  "description": "Hiển thị ảnh + tiêu đề + mô tả theo mẫu Block ABOUT ME",
+  "editorScript": "file:./build/index.js",
+  "editorStyle": "file:./build/editor.css",
+  "style": "file:./build/style.css",
+  "supports": {
+    "align": ["wide", "full"],
+    "html": false
+  },
+  "attributes": {
+    "circle": { "type": "string", "default": "about me - about me - about me - about me -" },
+    "imageID": { "type": "number", "default": 0 },
+    "imageURL": { "type": "string", "default": "" },
+    "title": { "type": "string", "default": "About me" },
+    "desc": { "type": "string", "default": "" }
+  }
+}
+
+

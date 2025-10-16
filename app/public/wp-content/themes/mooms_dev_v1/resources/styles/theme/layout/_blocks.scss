@@ -108,6 +108,7 @@ section:not(.block-about) {
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
+
             @include iconify-mask("guidance:down-arrow", 4rem, 4rem, $primaryColorDark);
 
             @include maxWidth($sm) {
@@ -142,7 +143,7 @@ section:not(.block-about) {
 .block-service {
     .block-desc {
         margin: 0 auto;
-        max-width: 92rem;
+        max-width: 16rem;
     }
 
     &__list {
@@ -152,7 +153,6 @@ section:not(.block-about) {
     }
 
     &__item {
-       
 
         .item__link {
             padding: 6rem 3rem;
@@ -161,9 +161,6 @@ section:not(.block-about) {
             background-color: #fff;
             text-align: center;
             color: #010101;
-
-            &:hover {
-            }
         }
 
         .item__icon {
