@@ -1,5 +1,71 @@
 # Gutenberg Blocks - Mooms Theme
 
+> **Phương pháp:** Native JavaScript (ES5) với WordPress Block APIs  
+> **KHÔNG sử dụng:** JSX, Build tools (@wordpress/scripts), React components trực tiếp
+
+## Phân biệt các phương pháp tạo Gutenberg Blocks
+
+### 1. **Native JavaScript (ES5) - Phương pháp hiện tại** ✅
+```javascript
+// Dùng wp.element.createElement() thay vì JSX
+wp.element.createElement('div', {}, 'Hello World')
+```
+- ✅ Không cần build tools
+- ✅ Tương thích mọi môi trường
+- ✅ Code dễ debug
+- ❌ Verbose hơn JSX
+- ❌ Phải tự quản lý dependencies
+
+### 2. **React/JSX với @wordpress/scripts**
+```javascript
+// Dùng JSX syntax (cần build)
+<div>Hello World</div>
+```
+- ✅ Syntax ngắn gọn hơn
+- ✅ Tooling mạnh mẽ
+- ❌ Cần build process
+- ❌ Phức tạp hơn
+- ❌ Có thể conflict với theme framework (WPEmerge)
+
+### 3. **Carbon Fields Blocks** (đang dùng cho các block cũ)
+```php
+// PHP-first approach
+Block::make('Block Name')->set_render_callback(...)
+```
+- ✅ Đơn giản với PHP
+- ✅ Không cần JavaScript
+- ❌ Không có visual editing trong Gutenberg
+- ❌ Ít flexible hơn
+
+## So sánh Code giữa các phương pháp
+
+### Native JavaScript (đang dùng):
+```javascript
+// Không cần build, chạy trực tiếp trong browser
+wp.element.createElement('h2', { className: 'title' }, 'Hello')
+```
+
+### React/JSX (cần build):
+```jsx
+// Cần compile từ JSX → JavaScript
+<h2 className="title">Hello</h2>
+```
+
+### Carbon Fields (PHP):
+```php
+// Không có visual editing, chỉ form fields
+Field::make('text', 'title', 'Title')
+```
+
+## Tại sao chọn Native JavaScript?
+
+1. **Tương thích:** Không conflict với WPEmerge framework của theme
+2. **Đơn giản:** Không cần setup build process phức tạp (Webpack, Babel, etc.)
+3. **Performance:** Code nhẹ, load nhanh, không có overhead của JSX compilation
+4. **Maintainable:** Dễ maintain, không phụ thuộc nhiều dependencies
+5. **Visual editing:** Có preview trực quan trong Gutenberg (khác Carbon Fields)
+6. **Debugging:** Dễ debug vì code chạy trực tiếp, không qua transformation
+
 ## Cấu trúc thư mục
 
 ```
@@ -189,3 +255,47 @@ Xem thư mục `service/` để tham khảo cách implement block động với:
 - Block có nội dung tĩnh (text, images)
 - Không cần query database
 - Nội dung không thay đổi sau khi save
+ 
+---
+
+## Ghi chú bổ sung (Tổng kết nhanh)
+
+### Ưu điểm (Native JS với WordPress Block APIs)
+- Dễ triển khai: không cần build (Webpack/Babel), chạy thẳng ES5.
+- Tương thích cao: ít xung đột môi trường (WPEmerge, plugins).
+- Nhẹ và nhanh: ít phụ thuộc, bundle nhỏ, dễ debug.
+- Tận dụng được hệ sinh thái WordPress (`wp.blocks`, `wp.element`, `wp.blockEditor`, `wp.components`).
+
+### Nhược điểm
+- Cú pháp dài hơn JSX; UI phức tạp sẽ khó đọc/bảo trì.
+- Thiếu tiện nghi của toolchain hiện đại (linting, HMR, TypeScript).
+- Khó modular hóa nếu không tổ chức tốt.
+
+### Khi nên dùng Native JS
+- Muốn tối giản setup, ưu tiên ổn định/tương thích.
+- UI block ở mức vừa–đơn giản (form nhỏ, danh sách, preview cơ bản).
+- Môi trường có ràng buộc (shared hosting, không có build server).
+
+### Khi cân nhắc React/JSX (@wordpress/scripts)
+- UI phức tạp, nhiều component tương tác.
+- Cần TypeScript, unit test, code-splitting, storybook.
+- Team quen workflow React, muốn tái dùng thư viện React.
+
+### Nguồn tài liệu học (chính thống, cập nhật)
+- Block Editor Handbook: [developer.wordpress.org/block-editor](https://developer.wordpress.org/block-editor/)
+- Packages/APIs:
+  - `wp.blocks`: [Blocks API](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-blocks/)
+  - `wp.element`: [Element (React layer)](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-element/)
+  - `wp.blockEditor`: [Block Editor](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/)
+  - `wp.components`: [Components](https://developer.wordpress.org/block-editor/reference-guides/components/)
+  - `wp.apiFetch`: [apiFetch](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-api-fetch/)
+- Hướng dẫn:
+  - Getting started – Create a Block: [Create a Block](https://developer.wordpress.org/block-editor/getting-started/create-block/)
+  - Block Metadata (`block.json`): [Block Metadata](https://developer.wordpress.org/block-editor/reference-guides/block-api/block-metadata/)
+- Tham khảo mã nguồn core blocks: [Gutenberg block-library](https://github.com/WordPress/gutenberg/tree/trunk/packages/block-library)
+
+### Lộ trình học nhanh (gợi ý)
+1. `registerBlockType`, `attributes`, `edit/save`, `InspectorControls`, `RichText`, `MediaUpload`.
+2. `apiFetch` + REST routes (WP core + CPT).
+3. Tổ chức ES5 theo IIFE mỗi block, kèm docs/comment tối thiểu.
+4. Khi UI phức tạp: cân nhắc chuyển sang @wordpress/scripts + JSX.
