@@ -32,8 +32,8 @@ class AdminSettings
 
         $this->addDashboardContactWidget();
         // TEMP DISABLED: tránh làm mất core widgets ở Appearance → Widgets và tránh conflict với admin JS
-        // $this->removeDefaultWidgets();
-        // $this->removeDashboardWidgets();
+        $this->removeDefaultWidgets();
+        $this->removeDashboardWidgets();
 		$this->changeHeaderUrl();
 		$this->changeHeaderTitle();
 		$this->changeFooterCopyright();
