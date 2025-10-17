@@ -31,9 +31,9 @@ class AdminSettings
 		}
 
         $this->addDashboardContactWidget();
-        // TEMP DISABLED: tránh làm mất core widgets ở Appearance → Widgets
-        $this->removeDefaultWidgets();
-        $this->removeDashboardWidgets();
+        // TEMP DISABLED: tránh làm mất core widgets ở Appearance → Widgets và tránh conflict với admin JS
+        // $this->removeDefaultWidgets();
+        // $this->removeDashboardWidgets();
 		$this->changeHeaderUrl();
 		$this->changeHeaderTitle();
 		$this->changeFooterCopyright();
@@ -304,12 +304,29 @@ class AdminSettings
 		$theme_path = str_replace('wp-content/themes/'. $theme_name .'/theme', 'wp-content/themes/' . $theme_name . '/', $my_theme->get_template_directory_uri());
 
 		add_action('admin_enqueue_scripts', static function ($hook) use ($theme_path) {
-			wp_enqueue_script('jquery_repeater', 'https://cdnjs.cloudflare.com/ajax/libs/jquery.repeater/1.2.1/jquery.repeater.min.js');
-			wp_enqueue_script('theme-admin', $theme_path . '/dist/admin.js', ['jquery'], null, true);
+			// Enqueue jQuery Repeater
+			wp_enqueue_script('jquery_repeater', 'https://cdnjs.cloudflare.com/ajax/libs/jquery.repeater/1.2.1/jquery.repeater.min.js', ['jquery'], '1.2.1', true);
+			
+			// Enqueue vendors~admin.js first (contains SweetAlert2)
+			wp_enqueue_script('theme-admin-vendors', $theme_path . '/dist/vendors~admin.js', ['jquery'], null, true);
+			
+			// Enqueue main admin.js with proper dependencies
+			wp_enqueue_script('theme-admin', $theme_path . '/dist/admin.js', ['jquery', 'theme-admin-vendors'], null, true);
+			
 			// Localize for dashboard features (moved from dashboard.js)
 			wp_localize_script('theme-admin', 'mmsDashboard', [
 				'ajaxurl' => admin_url('admin-ajax.php'),
 				'nonce' => wp_create_nonce('mms_dashboard_nonce'),
+			]);
+			
+			// Localize for bulk optimize features
+			wp_localize_script('theme-admin', 'mmsBulkOptimize', [
+				'ajaxurl' => admin_url('admin-ajax.php'), // Fallback ajaxurl
+				'nonce' => wp_create_nonce('mms_bulk_optimize_images'),
+				'nonce_list' => wp_create_nonce('mms_get_images_list'),
+				'nonce_selected' => wp_create_nonce('mms_optimize_selected'),
+				'nonce_restore' => wp_create_nonce('mms_restore_image'),
+				'nonce_bulk_restore' => wp_create_nonce('mms_bulk_restore_images'),
 			]);
 		});
 
@@ -689,6 +706,64 @@ class AdminSettings
 				Field::make( 'html', 'max_height_desc' )
 					->set_width(70)
 					->set_html( '<i class="fa-regular fa-lightbulb-on"></i> Chiều cao tối đa của hình ảnh' ),
+
+				// Bulk Optimize Section
+				Field::make( 'separator', 'bulk_optimize_separator', __( 'Bulk Optimize Images', 'mms' ) ),
+				Field::make( 'html', 'bulk_optimize_ui' )
+					->set_html( '
+						<div id="mms-bulk-optimize-container" style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 15px 0;">
+							<h3 style="margin-top: 0;"><i class="fa-solid fa-compress"></i> Bulk Optimize Existing Images</h3>
+							<p>Nén và chuyển đổi tất cả hình ảnh hiện có trong thư viện media theo cài đặt trên.</p>
+							
+							<div style="margin: 15px 0;">
+								<label for="bulk-min-kb" style="display: inline-block; width: 150px; font-weight: 600;">Kích thước tối thiểu:</label>
+								<input type="number" id="bulk-min-kb" value="500" min="1" style="width: 100px; padding: 5px; margin-right: 10px;"> KB
+								<span style="color: #666; font-size: 12px;">Chỉ xử lý ảnh lớn hơn kích thước này</span>
+							</div>
+							
+							<div style="margin: 15px 0;">
+								<label for="bulk-batch-size" style="display: inline-block; width: 150px; font-weight: 600;">Số ảnh mỗi lần:</label>
+								<input type="number" id="bulk-batch-size" value="50" min="1" max="200" style="width: 100px; padding: 5px; margin-right: 10px;"> ảnh
+								<span style="color: #666; font-size: 12px;">Số ảnh xử lý trong mỗi batch</span>
+							</div>
+							
+							<div style="margin: 20px 0;">
+							<button type="button" id="mms-start-bulk-optimize" class="button button-primary" style="margin-right: 10px;">
+								<i class="fa-solid fa-play"></i> Bắt đầu tối ưu tất cả
+							</button>
+							<button type="button" id="mms-select-images-btn" class="button button-secondary" style="margin-right: 10px;">
+								<i class="fa-solid fa-images"></i> Chọn ảnh để tối ưu
+							</button>
+							<button type="button" id="mms-bulk-restore-btn" class="button button-secondary" style="margin-right: 10px;">
+								<i class="fa-solid fa-rotate-left"></i> Restore tất cả
+							</button>
+							<button type="button" id="mms-stop-bulk-optimize" class="button" style="display: none;">
+								<i class="fa-solid fa-stop"></i> Dừng
+							</button>
+							<button type="button" id="mms-reset-bulk-optimize" class="button">
+								<i class="fa-solid fa-redo"></i> Reset
+							</button>
+							</div>
+							
+							<div id="mms-bulk-progress" style="display: none; margin: 20px 0;">
+								<div style="background: #e0e0e0; height: 20px; border-radius: 10px; overflow: hidden;">
+									<div id="mms-progress-bar" style="background: linear-gradient(90deg, #4CAF50, #45a049); height: 100%; width: 0%; transition: width 0.3s ease; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;"></div>
+								</div>
+								<div id="mms-progress-text" style="text-align: center; margin-top: 10px; font-weight: 600;"></div>
+							</div>
+							
+							<div id="mms-bulk-results" style="display: none; margin: 20px 0; padding: 15px; background: #e8f5e8; border-radius: 5px; border-left: 4px solid #4CAF50;">
+								<h4 style="margin-top: 0; color: #2e7d32;"><i class="fa-solid fa-check-circle"></i> Hoàn thành!</h4>
+								<div id="mms-results-content"></div>
+							</div>
+							
+							<div id="mms-bulk-error" style="display: none; margin: 20px 0; padding: 15px; background: #ffebee; border-radius: 5px; border-left: 4px solid #f44336;">
+								<h4 style="margin-top: 0; color: #c62828;"><i class="fa-solid fa-exclamation-triangle"></i> Lỗi!</h4>
+								<div id="mms-error-content"></div>
+							</div>
+						</div>
+						<!-- Script đã được chuyển sang /resources/scripts/admin/bulk-optimize.js và được import vào admin bundle -->
+					' ),
 			])
 
 			->add_tab(__('Optimization', 'mms'), [

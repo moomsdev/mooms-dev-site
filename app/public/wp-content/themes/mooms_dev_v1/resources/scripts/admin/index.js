@@ -1,5 +1,6 @@
 import "@styles/admin";
 import "@scripts/admin/custom_thumbnail_support.js";
+import "@scripts/admin/bulk-optimize.js";
 // SweetAlert2 for admin (expose globally for inline hooks)
 import Swal from "sweetalert2";
 window.Swal = Swal;
@@ -86,16 +87,14 @@ jQuery(document).on("click", "[data-trigger-change-thumbnail-id]", function () {
 });
 
 // Khi trang tải, kiểm tra ảnh đại diện
-jQuery(function () {
-  scripts.init();
-
-  jQuery("[data-trigger-change-thumbnail-id]").each(function () {
-    let imageElement = jQuery(this).find("img");
-
-    if (!imageElement.attr("src") || imageElement.attr("src") === "") {
-      imageElement.replaceWith('<div class="no-image-text">Choose Image</div>');
-    }
-  });
+jQuery(document).ready(function () {
+  const postId = jQuery("input#post_ID").val();
+  if (postId) {
+    jQuery.post("/wp-admin/admin-ajax.php", {
+      action: "mm_get_attachment_url_thumbnail",
+      attachmentID: postId,
+    });
+  }
 });
 
 // Xử lý hiển thị/ẩn password (cho field có data-field="password-field")
@@ -114,7 +113,8 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleButton.style.cursor = 'pointer';
     toggleButton.setAttribute('data-toggle', 'password-toggle');
     passwordField.parentNode.appendChild(toggleButton);
-    toggleButton.addEventListener('click', function () {
+
+    toggleButton.addEventListener('click', function() {
       if (passwordField.type === 'password') {
         passwordField.type = 'text';
         toggleButton.innerHTML = 'Hide';
@@ -219,7 +219,3 @@ document.addEventListener('DOMContentLoaded', function () {
     window.MMSDashboard = MMSDashboard;
 
 })(jQuery);
-
-// ===== Quick thumbnail picker for Pages (edit.php?post_type=page) =====
-// Note: Quick-change button near title removed; use click on the Image column box instead.
-
