@@ -76,6 +76,7 @@ add_filter('script_loader_tag', function ($tag, $handle) {
     return $tag;
 }, 10, 2);
 
+
 // 9. Tối ưu admin menu queries
 add_action('admin_menu', function () {
     // Remove unnecessary menus nhanh hơn
