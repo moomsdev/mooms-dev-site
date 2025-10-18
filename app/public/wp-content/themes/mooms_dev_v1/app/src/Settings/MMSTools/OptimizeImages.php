@@ -623,7 +623,62 @@ class OptimizeImages
 
         $page = isset($_POST['page']) ? max(1, (int) $_POST['page']) : 1;
         $per_page = isset($_POST['per_page']) ? max(1, min(100, (int) $_POST['per_page'])) : 20;
-        $min_kb = isset($_POST['min_kb']) ? max(0, (int) $_POST['min_kb']) : 0;
+        $min_size_kb = isset($_POST['min_size_kb']) ? max(0, (int) $_POST['min_size_kb']) : 0;
+        $search = isset($_POST['search']) ? sanitize_text_field($_POST['search']) : '';
+        $sort_by = isset($_POST['sort_by']) ? sanitize_text_field($_POST['sort_by']) : 'date_desc';
+        $unoptimized_only = isset($_POST['unoptimized_only']) ? filter_var($_POST['unoptimized_only'], FILTER_VALIDATE_BOOLEAN) : false;
+        $debug_checkbox = isset($_POST['debug_checkbox']) ? filter_var($_POST['debug_checkbox'], FILTER_VALIDATE_BOOLEAN) : false;
+        $debug_version = isset($_POST['debug_version']) ? $_POST['debug_version'] : 'unknown';
+
+        error_log('MMS Debug: Filter params - search: ' . $search . ', min_size_kb: ' . $min_size_kb . ', sort_by: ' . $sort_by . ', unoptimized_only: ' . ($unoptimized_only ? 'true' : 'false'));
+        error_log('MMS Debug: Debug params - debug_checkbox: ' . ($debug_checkbox ? 'true' : 'false') . ', debug_version: ' . $debug_version);
+        error_log('MMS Debug: Raw POST unoptimized_only: ' . (isset($_POST['unoptimized_only']) ? $_POST['unoptimized_only'] : 'not set'));
+        error_log('MMS Debug: All POST data: ' . print_r($_POST, true));
+        
+        // Debug: Check total images without filters
+        $total_args = [
+            'post_type' => 'attachment',
+            'post_status' => 'inherit',
+            'post_mime_type' => ['image/jpeg', 'image/png', 'image/webp'],
+            'posts_per_page' => -1,
+            'fields' => 'ids'
+        ];
+        $total_query = new \WP_Query($total_args);
+        error_log('MMS Debug: Total images in database: ' . $total_query->found_posts);
+
+        // Parse sort parameters
+        $orderby = 'date';
+        $order = 'DESC';
+        $sort_by_size = false;
+        
+        switch ($sort_by) {
+            case 'date_asc':
+                $orderby = 'date';
+                $order = 'ASC';
+                break;
+            case 'date_desc':
+                $orderby = 'date';
+                $order = 'DESC';
+                break;
+            case 'size_asc':
+                $orderby = 'date'; // Fallback to date
+                $order = 'DESC';
+                $sort_by_size = 'ASC';
+                break;
+            case 'size_desc':
+                $orderby = 'date'; // Fallback to date
+                $order = 'DESC';
+                $sort_by_size = 'DESC';
+                break;
+            case 'name_asc':
+                $orderby = 'title';
+                $order = 'ASC';
+                break;
+            case 'name_desc':
+                $orderby = 'title';
+                $order = 'DESC';
+                break;
+        }
 
         $args = [
             'post_type' => 'attachment',
@@ -631,16 +686,65 @@ class OptimizeImages
             'post_mime_type' => ['image/jpeg', 'image/png', 'image/webp'],
             'posts_per_page' => $per_page,
             'paged' => $page,
-            'orderby' => 'date',
-            'order' => 'DESC',
+            'orderby' => $orderby,
+            'order' => $order,
         ];
+        
 
+        // Add search
+        if (!empty($search)) {
+            $args['s'] = $search;
+        }
+
+        // Build meta query
+        $meta_query = [];
+
+        // Add filter for optimization status
+        if ($unoptimized_only) {
+            $meta_query[] = [
+                'key' => '_mms_optimized',
+                'compare' => 'NOT EXISTS'
+            ];
+        }
+        
+        // Add meta query to args if we have any
+        if (!empty($meta_query)) {
+            $args['meta_query'] = $meta_query;
+        }
+
+        error_log('MMS Debug: WP_Query args: ' . print_r($args, true));
+        
         $query = new \WP_Query($args);
         $images = [];
+        
+        error_log('MMS Debug: Query found ' . $query->found_posts . ' posts, returning ' . count($query->posts) . ' posts');
+        error_log('MMS Debug: Processing ' . count($query->posts) . ' posts for images array');
+
+        // Sort by size if needed
+        if ($sort_by_size) {
+            $posts_with_size = [];
+            foreach ($query->posts as $post) {
+                $file = get_attached_file($post->ID);
+                $size = $file && file_exists($file) ? filesize($file) : 0;
+                $posts_with_size[] = ['post' => $post, 'size' => $size];
+            }
+            
+            // Sort by size
+            usort($posts_with_size, function($a, $b) use ($sort_by_size) {
+                if ($sort_by_size === 'ASC') {
+                    return $a['size'] <=> $b['size'];
+                } else {
+                    return $b['size'] <=> $a['size'];
+                }
+            });
+            
+            $query->posts = array_column($posts_with_size, 'post');
+        }
 
         foreach ($query->posts as $post) {
             $file = get_attached_file($post->ID);
             if (!$file || !file_exists($file)) {
+                error_log("MMS Debug: Skipping ID {$post->ID} - file not found: " . $file);
                 continue;
             }
 
@@ -648,9 +752,12 @@ class OptimizeImages
             $sizeKB = $size / 1024;
 
             // Skip if smaller than minimum
-            if ($min_kb > 0 && $sizeKB < $min_kb) {
+            if ($min_size_kb > 0 && $sizeKB < $min_size_kb) {
+                error_log("MMS Debug: Skipping ID {$post->ID} - size {$sizeKB}KB < {$min_size_kb}KB");
                 continue;
             }
+            
+            error_log("MMS Debug: Processing ID {$post->ID} - size {$sizeKB}KB");
 
             $isOptimized = (bool) get_post_meta($post->ID, '_mms_optimized', true);
             $hasBackup = (bool) get_post_meta($post->ID, '_mms_backup_path', true);
@@ -672,6 +779,7 @@ class OptimizeImages
         }
 
         error_log('MMS Debug: Returning ' . count($images) . ' images from ' . $query->found_posts . ' total');
+        error_log('MMS Debug: Final images array: ' . print_r(array_column($images, 'id'), true));
         
         wp_send_json_success([
             'images' => $images,

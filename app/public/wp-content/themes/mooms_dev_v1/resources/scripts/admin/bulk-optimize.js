@@ -82,6 +82,9 @@ import debounce from 'lodash/debounce';
                             </div>
                         </div>
                     `,
+                    customClass: {
+                        popup: 'swal-bulk-optimize-progress'
+                    },
                     allowOutsideClick: false,
                     allowEscapeKey: false,
                     showConfirmButton: false,
@@ -165,6 +168,9 @@ import debounce from 'lodash/debounce';
                                         </div>
                                     </div>
                                 `,
+                                customClass: {
+                                    popup: 'swal-bulk-optimize-complete'
+                                },
                                 confirmButtonText: 'OK',
                                 confirmButtonColor: '#4CAF50'
                             });
@@ -188,6 +194,9 @@ import debounce from 'lodash/debounce';
                             icon: 'error',
                             title: 'Lỗi!',
                             text: response.data?.message || 'Có lỗi xảy ra trong quá trình tối ưu hóa',
+                            customClass: {
+                                popup: 'swal-bulk-optimize-error'
+                            },
                             confirmButtonText: 'OK'
                         });
                     }
@@ -206,6 +215,9 @@ import debounce from 'lodash/debounce';
                         icon: 'error',
                         title: 'Lỗi AJAX!',
                         text: 'Không thể kết nối đến server: ' + error,
+                        customClass: {
+                            popup: 'swal-bulk-optimize-ajax-error'
+                        },
                         confirmButtonText: 'OK'
                     });
                 }
@@ -251,12 +263,25 @@ import debounce from 'lodash/debounce';
                         <div id="mms-image-selector-content" style="min-height: 400px;">
                             <div style="margin: 10px 0;">
                                 <input type="text" id="mms-search-images" placeholder="Tìm kiếm..." style="width: 100%; padding: 8px; margin-bottom: 10px;">
-                                <label style="display: inline-block; margin-right: 15px;">
-                                    <input type="checkbox" id="mms-filter-unoptimized"> Chỉ hiển thị ảnh chưa tối ưu
-                                </label>
-                                <label style="display: inline-block;">
-                                    Kích thước tối thiểu: <input type="number" id="mms-filter-minsize" value="0" style="width: 80px; padding: 4px;"> KB
-                                </label>
+                                <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;">
+                                    <label style="display: inline-block;">
+                                        <input type="checkbox" id="mms-filter-unoptimized-v3" data-version="3"> Chỉ hiển thị ảnh chưa tối ưu
+                                    </label>
+                                    <label style="display: inline-block;">
+                                        Kích thước tối thiểu: <input type="number" id="mms-filter-minsize" value="0" style="width: 80px; padding: 4px;"> KB
+                                    </label>
+                                    <label style="display: inline-block;">
+                                        Sắp xếp: 
+                                        <select id="mms-sort-by" style="padding: 4px; margin-left: 5px;">
+                                            <option value="date_desc">Ngày (mới nhất)</option>
+                                            <option value="date_asc">Ngày (cũ nhất)</option>
+                                            <option value="size_desc">Dung lượng (lớn nhất)</option>
+                                            <option value="size_asc">Dung lượng (nhỏ nhất)</option>
+                                            <option value="name_asc">Tên (A-Z)</option>
+                                            <option value="name_desc">Tên (Z-A)</option>
+                                        </select>
+                                    </label>
+                                </div>
                             </div>
                             <div id="mms-images-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
                                 <div style="text-align: center; grid-column: 1 / -1;">
@@ -265,6 +290,9 @@ import debounce from 'lodash/debounce';
                             </div>
                         </div>
                     `,
+                    customClass: {
+                        popup: 'swal-image-selector'
+                    },
                     width: '800px',
                     showDenyButton: true,
                     showCancelButton: true,
@@ -275,11 +303,16 @@ import debounce from 'lodash/debounce';
                     denyButtonColor: '#d33',
                     didOpen: () => {
                         console.log('Modal didOpen - loading images...');
+                        console.log('Initial checkbox state:', $('#mms-filter-unoptimized-v3').is(':checked'));
                         self.loadImagesList();
-                        $('#mms-filter-unoptimized, #mms-filter-minsize').on('change', () => {
+                        
+                        // Auto-apply on change
+                        $('#mms-filter-unoptimized-v3, #mms-filter-minsize, #mms-sort-by').on('change', () => {
                             console.log('Filter changed');
                             self.loadImagesList();
                         });
+                        
+                        // Search with debounce
                         $('#mms-search-images').on('keyup', debounce(() => {
                             console.log('Search changed');
                             self.loadImagesList();
@@ -321,12 +354,22 @@ import debounce from 'lodash/debounce';
             });
         },
 
+
         loadImagesList: function(page = 1) {
             console.log('loadImagesList called, page:', page);
-            const unoptimizedOnly = $('#mms-filter-unoptimized').is(':checked');
-            const minKB = parseInt($('#mms-filter-minsize').val()) || 0;
             
-            console.log('Filters:', { unoptimizedOnly, minKB });
+            // Get filter values
+            const search = $('#mms-search-images').val() || '';
+            const minSize = parseInt($('#mms-filter-minsize').val()) || 0;
+            const sortBy = $('#mms-sort-by').val() || 'date_desc';
+            const unoptimizedOnly = $('#mms-filter-unoptimized-v3').is(':checked');
+            
+            console.log('Filter params:', { search, minSize, sortBy, unoptimizedOnly, page });
+            console.log('Checkbox element:', $('#mms-filter-unoptimized-v3')[0]);
+            console.log('Checkbox checked:', $('#mms-filter-unoptimized-v3').is(':checked'));
+            console.log('Checkbox prop checked:', $('#mms-filter-unoptimized-v3').prop('checked'));
+            console.log('Checkbox HTML:', $('#mms-filter-unoptimized-v3')[0].outerHTML);
+            console.log('All checkboxes:', $('input[type="checkbox"]').map(function() { return this.id + ':' + $(this).is(':checked'); }).get());
             console.log('AJAX URL:', window.mmsBulkOptimize.ajaxurl || ajaxurl);
             console.log('Nonce:', window.mmsBulkOptimize.nonce_list);
 
@@ -338,23 +381,32 @@ import debounce from 'lodash/debounce';
                     nonce: window.mmsBulkOptimize.nonce_list,
                     page: page,
                     per_page: 20,
-                    min_kb: minKB
+                    search: search,
+                    min_size_kb: minSize,
+                    sort_by: sortBy,
+                    unoptimized_only: unoptimizedOnly,
+                    debug_checkbox: $('#mms-filter-unoptimized-v3').is(':checked'),
+                    debug_version: 'v4',
+                    force_reload: Date.now()
                 },
                 beforeSend: function() {
                     console.log('AJAX request starting...');
+                    console.log('Request data:', {
+                        action: 'mms_get_images_list',
+                        search: search,
+                        min_size_kb: minSize,
+                        sort_by: sortBy,
+                        unoptimized_only: unoptimizedOnly
+                    });
                 },
                 success: (response) => {
                     console.log('loadImagesList response:', response);
                     if (response.success && response.data) {
                         console.log('Total images from server:', response.data.images.length);
-                        console.log('Unoptimized filter:', unoptimizedOnly);
+                        console.log('Processing images:', response.data.images.length);
                         let html = '';
                         let visibleCount = 0;
                         response.data.images.forEach((img) => {
-                            if (unoptimizedOnly && img.is_optimized) {
-                                console.log('Skipping optimized image:', img.id, img.title);
-                                return;
-                            }
                             visibleCount++;
 
                             const badgeColor = img.is_optimized ? '#4CAF50' : '#ff9800';
@@ -400,7 +452,8 @@ import debounce from 'lodash/debounce';
                 },
                 error: (xhr, status, error) => {
                     console.error('AJAX error loading images:', xhr, status, error);
-                    $('#mms-images-grid').html('<div style="text-align: center; grid-column: 1 / -1; color: #f44336;">Lỗi AJAX khi tải danh sách ảnh: ' + error + '</div>');
+                    console.error('Response text:', xhr.responseText);
+                    $('#mms-images-grid').html('<div style="text-align: center; grid-column: 1 / -1; color: #f44336;">Lỗi AJAX khi tải danh sách ảnh: ' + error + '<br><small>Response: ' + xhr.responseText + '</small></div>');
                 }
             });
         },
@@ -409,6 +462,9 @@ import debounce from 'lodash/debounce';
             Swal.fire({
                 title: 'Đang tối ưu...',
                 html: `<div>Đang xử lý ${ids.length} ảnh...</div>`,
+                customClass: {
+                    popup: 'swal-optimize-selected-progress'
+                },
                 allowOutsideClick: false,
                 showConfirmButton: false,
                 didOpen: () => {
@@ -433,6 +489,9 @@ import debounce from 'lodash/debounce';
                                 <p>Đã tối ưu thành công <strong>${response.data.optimized}</strong> / ${response.data.total} ảnh</p>
                                 ${response.data.failed > 0 ? `<p style="color: #f44336;">Thất bại: ${response.data.failed} ảnh</p>` : ''}
                             `,
+                            customClass: {
+                                popup: 'swal-optimize-selected-complete'
+                            },
                             confirmButtonText: 'OK'
                         });
                     } else {
@@ -440,6 +499,9 @@ import debounce from 'lodash/debounce';
                             icon: 'error',
                             title: 'Lỗi!',
                             text: response.data?.message || 'Có lỗi xảy ra',
+                            customClass: {
+                                popup: 'swal-optimize-selected-error'
+                            },
                             confirmButtonText: 'OK'
                         });
                     }
@@ -449,6 +511,9 @@ import debounce from 'lodash/debounce';
                         icon: 'error',
                         title: 'Lỗi AJAX!',
                         text: 'Không thể kết nối đến server',
+                        customClass: {
+                            popup: 'swal-optimize-selected-ajax-error'
+                        },
                         confirmButtonText: 'OK'
                     });
                 }
@@ -463,6 +528,9 @@ import debounce from 'lodash/debounce';
                 title: 'Xác nhận restore?',
                 text: 'Bạn có chắc muốn khôi phục ảnh gốc không?',
                 icon: 'warning',
+                customClass: {
+                    popup: 'swal-restore-confirm'
+                },
                 showCancelButton: true,
                 confirmButtonText: 'Restore',
                 cancelButtonText: 'Hủy'
@@ -484,6 +552,9 @@ import debounce from 'lodash/debounce';
                                     icon: 'success',
                                     title: 'Đã khôi phục!',
                                     text: response.data?.message || 'Ảnh đã được khôi phục về trạng thái ban đầu',
+                                    customClass: {
+                                        popup: 'swal-restore-success'
+                                    },
                                     confirmButtonText: 'OK'
                                 }).then(() => {
                                     console.log('Reloading images list...');
@@ -497,6 +568,9 @@ import debounce from 'lodash/debounce';
                                     icon: 'error',
                                     title: 'Lỗi!',
                                     text: response.data?.message || 'Không thể restore ảnh',
+                                    customClass: {
+                                        popup: 'swal-restore-error'
+                                    },
                                     confirmButtonText: 'OK'
                                 });
                             }
@@ -507,6 +581,9 @@ import debounce from 'lodash/debounce';
                                 icon: 'error',
                                 title: 'Lỗi AJAX!',
                                 text: 'Không thể kết nối server: ' + error,
+                                customClass: {
+                                    popup: 'swal-restore-ajax-error'
+                                },
                                 confirmButtonText: 'OK'
                             });
                         }
@@ -523,6 +600,9 @@ import debounce from 'lodash/debounce';
                 Swal.fire({
                     title: 'Đang restore...',
                     html: `<p>Đang restore <strong>${imageIds.length}</strong> ảnh...</p><p id="restore-progress">0/${imageIds.length}</p>`,
+                    customClass: {
+                        popup: 'swal-restore-selected-progress'
+                    },
                     allowOutsideClick: false,
                     showConfirmButton: false,
                     didOpen: () => {
@@ -543,6 +623,9 @@ import debounce from 'lodash/debounce';
                     icon: 'success',
                     title: 'Hoàn thành!',
                     html: `<p>Đã restore thành công <strong>${total}</strong> ảnh!</p>`,
+                    customClass: {
+                        popup: 'swal-restore-selected-complete'
+                    },
                     confirmButtonText: 'OK'
                 });
                 return;
@@ -584,6 +667,9 @@ import debounce from 'lodash/debounce';
                     title: 'Xác nhận restore tất cả?',
                     html: '<p>Bạn có chắc muốn khôi phục <strong>TẤT CẢ</strong> ảnh đã tối ưu về bản gốc không?</p><p style="color: red;">Hành động này KHÔNG THỂ hoàn tác!</p>',
                     icon: 'warning',
+                    customClass: {
+                        popup: 'swal-bulk-restore-confirm'
+                    },
                     showCancelButton: true,
                     confirmButtonText: 'Restore tất cả',
                     cancelButtonText: 'Hủy',
@@ -644,6 +730,9 @@ import debounce from 'lodash/debounce';
                                     <p>❌ Thất bại: <strong>${self.totalProcessed - self.totalRestored}</strong> ảnh</p>
                                     <p style="color: green; margin-top: 15px;">Quá trình restore đã hoàn thành thành công!</p>
                                 `,
+                                customClass: {
+                                    popup: 'swal-bulk-restore-complete'
+                                },
                                 confirmButtonText: 'OK'
                             });
                         }
@@ -653,6 +742,9 @@ import debounce from 'lodash/debounce';
                             icon: 'error',
                             title: 'Lỗi!',
                             text: response.data?.message || 'Không thể restore',
+                            customClass: {
+                                popup: 'swal-bulk-restore-error'
+                            },
                             confirmButtonText: 'OK'
                         });
                     }
@@ -664,6 +756,9 @@ import debounce from 'lodash/debounce';
                         icon: 'error',
                         title: 'Lỗi AJAX!',
                         text: 'Không thể kết nối server: ' + error,
+                        customClass: {
+                            popup: 'swal-bulk-restore-ajax-error'
+                        },
                         confirmButtonText: 'OK'
                     });
                 }
