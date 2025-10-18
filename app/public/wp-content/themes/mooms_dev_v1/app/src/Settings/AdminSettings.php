@@ -58,6 +58,15 @@ class AdminSettings
 		if (get_option('_hide_comment_menu_default') === 'yes') {
 			$this->hideCommentMenuDefault();
 		}
+
+		if (get_option('_use_classic_editor') === 'yes') {
+			$this->useClassicEditor();
+		}
+	}
+
+	public function useClassicEditor()
+	{
+		add_filter('use_block_editor_for_post_type', '__return_false', 100);
 	}
 
 	public function addCustomExtensionsInMediaUpload()
@@ -606,6 +615,12 @@ class AdminSettings
 					Field::make( 'html', 'hide_comment_menu_default_desc' )
 						->set_width(70)
 						->set_html( '<i class="fa-regular fa-lightbulb-on"></i> Khi bật chế độ này, bạn sẽ không thể xem menu bình luận trong trang admin.' ),
+
+					Field::make('checkbox', 'use_classic_editor', __('Sử dụng classic editor', 'mms'))
+						->set_width(30),
+					Field::make( 'html', 'use_classic_editor_desc' )
+						->set_width(70)
+						->set_html( '<i class="fa-regular fa-lightbulb-on"></i> Khi bật chế độ này, bạn sẽ sử dụng editor cũ để soạn thảo bài viết.' ),
 				])
 				->add_tab(__('SMTP', 'mms'), [
 					Field::make('checkbox', 'use_smtp', __('Sử dụng SMTP để gửi mail', 'mms')),
