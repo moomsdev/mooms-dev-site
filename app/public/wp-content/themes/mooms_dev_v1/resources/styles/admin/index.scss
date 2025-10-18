@@ -3,6 +3,7 @@
 // @import "../theme/blocks/**.scss";
 // @import "../theme/layout/_general.scss";
 // @import "../shared/introjs.css";
+@import 'sweetalert-custom';
 
 html :where(.wp-block) {
     max-width: 120rem;
@@ -462,4 +463,15 @@ button[data-toggle="password-toggle"] {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+// 
+#wp-admin-bar-logo_author a {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.cf-container__tabs-list .cf-container__tabs-item--current {
+    background-color: #e2e4e7 !important;
 }

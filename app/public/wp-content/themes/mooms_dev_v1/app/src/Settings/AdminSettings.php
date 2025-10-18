@@ -708,10 +708,9 @@ class AdminSettings
 					->set_html( '<i class="fa-regular fa-lightbulb-on"></i> Chiều cao tối đa của hình ảnh' ),
 
 				// Bulk Optimize Section
-				Field::make( 'separator', 'bulk_optimize_separator', __( 'Bulk Optimize Images', 'mms' ) ),
 				Field::make( 'html', 'bulk_optimize_ui' )
 					->set_html( '
-						<div id="mms-bulk-optimize-container" style="background: #f9f9f9; padding: 20px; border-radius: 8px; margin: 15px 0;">
+						<div id="mms-bulk-optimize-container">
 							<h3 style="margin-top: 0;"><i class="fa-solid fa-compress"></i> Bulk Optimize Existing Images</h3>
 							<p>Nén và chuyển đổi tất cả hình ảnh hiện có trong thư viện media theo cài đặt trên.</p>
 							
