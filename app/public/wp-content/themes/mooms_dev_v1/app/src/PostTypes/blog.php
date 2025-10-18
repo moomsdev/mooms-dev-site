@@ -24,6 +24,26 @@ class blog extends \App\Abstracts\AbstractPostType
         $this->singularName     = $this->pluralName = 'Blog'; 
         $this->titlePlaceHolder = 'Post';
         $this->slug             = 'blogs';
+        add_action( 'carbon_fields_register_fields', [ $this, 'metaFields' ] );
         parent::__construct();
+    }
+
+    /**
+     * Document: https://docs.carbonfields.net/#/containers/post-meta
+     */
+    public function metaFields()
+    {
+        Container::make('post_meta', __('Description | Mô tả', 'mms'))
+            ->set_context('normal') // Sử dụng context 'normal' để hiển thị trong Gutenberg
+            ->set_priority('default')
+            ->where('post_type', 'IN', [$this->post_type])
+            ->add_fields([
+                Field::make('complex', 'blog_extra', __('', 'mms'))
+                    ->set_layout('tabbed-horizontal')
+                    ->set_width(70)
+                    ->add_fields([
+                        Field::make('text', 'content', __('Content | Nội dung', 'mms')),
+                    ])->set_header_template('<% if (content) { %><%- content %><% } %>'),
+            ]);
     }
 }
