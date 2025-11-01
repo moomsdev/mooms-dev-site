@@ -1,16 +1,15 @@
 /**
- * External dependencies.
+ * The external dependencies.
  */
 const { ProvidePlugin, WatchIgnorePlugin } = require('webpack');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const ImageminPlugin = require('imagemin-webpack-plugin').default;
-const ManifestPlugin = require('webpack-manifest-plugin');
-const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
-
+const WebpackAssetsManifest = require('webpack-assets-manifest');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 /**
- * Internal dependencies.
+ * The internal dependencies.
  */
 const utils = require('./lib/utils');
 const configLoader = require('./config-loader');
@@ -18,12 +17,12 @@ const spriteSmith = require('./spritesmith');
 const postcss = require('./postcss');
 
 /**
- * Setup the environment.
+ * Setup the env.
  */
 const { env: envName } = utils.detectEnv();
 
 /**
- * Setup Babel loader (Babel 6).
+ * Setup babel loader.
  */
 const babelLoader = {
     loader: 'babel-loader',
@@ -31,53 +30,46 @@ const babelLoader = {
         cacheDirectory: false,
         comments: false,
         presets: [
-            '@babel/preset-env'
+            '@babel/preset-env',
         ],
     },
 };
 
 /**
- * Setup ExtractTextPlugin for CSS.
- */
-const extractSass = new ExtractTextPlugin({
-    filename: 'styles/[name].css',
-});
-
-/**
- * Setup Webpack plugins.
+ * Setup webpack plugins.
  */
 const plugins = [
-    new CleanWebpackPlugin(utils.distPath(), {
-        root: utils.themeRootPath()
+    new CleanWebpackPlugin({
+        cleanOnceBeforeBuildPatterns: [utils.distPath()],
     }),
-    new WatchIgnorePlugin([
-        /node_modules/,
-        /dist/
-    ]),
+    new WatchIgnorePlugin({
+        paths: [/node_modules/, /dist/]
+    }),
     new ProvidePlugin({
         $: 'jquery',
-        jQuery: 'jquery'
+        jQuery: 'jquery',
     }),
-    extractSass,
+    new MiniCssExtractPlugin({
+        filename: 'styles/[name].css',
+    }),
     spriteSmith,
+    // new UglifyJSPlugin(),
     new ImageminPlugin({
         optipng: { optimizationLevel: 7 },
         gifsicle: { optimizationLevel: 3 },
-        svgo: { plugins: [] },
+        svgo: { plugins: [/* svgo plugins */] },
         plugins: [
             require('imagemin-mozjpeg')({
-                quality: 100
-            })
-        ]
+                quality: 100,
+            }),
+        ],
     }),
-    new ManifestPlugin(),
-    new BundleAnalyzerPlugin({
-        analyzerMode: 'static',
-        reportFilename: 'bundle-report.html',
-        openAnalyzer: true
-    })
+    new WebpackAssetsManifest(),
 ];
 
+/**
+ * Export the configuration.
+ */
 module.exports = {
     optimization: {
         minimize: true,
@@ -86,14 +78,15 @@ module.exports = {
                 parallel: true,
                 terserOptions: {
                     compress: {
-                        drop_console: true
-                    }
-                }
-            })
+                        drop_console: true,
+                    },
+                },
+            }),
+            new CssMinimizerPlugin(),
         ],
         splitChunks: {
-            chunks: 'all'
-        }
+            chunks: 'all',
+        },
     },
     entry: require('./webpack/entry'),
     output: require('./webpack/output'),
@@ -101,76 +94,72 @@ module.exports = {
     externals: require('./webpack/externals'),
     module: {
         rules: [
-            // Hỗ trợ import glob cho các file JS/CSS/SCSS.
             {
                 enforce: 'pre',
                 test: /\.(js|jsx|css|scss|sass)$/i,
-                use: 'import-glob'
+                use: 'import-glob',
             },
-            // Xử lý file config.json.
             {
                 test: utils.themeRootPath('config.json'),
-                use: configLoader
+                use: configLoader,
             },
-            // Xử lý JS qua Babel.
             {
                 test: utils.tests.scripts,
                 exclude: /node_modules/,
-                use: babelLoader
+                use: babelLoader,
             },
-            // Xử lý SCSS/CSS qua ExtractTextPlugin.
             {
                 test: utils.tests.styles,
-                use: extractSass.extract({
-                    publicPath: '../',
-                    use: [
-                        {
-                            loader: 'css-loader',
-                            options: {
-                                sourceMap: true,
-                                importLoaders: 1
-                            }
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: true,
+                            importLoaders: 1,
                         },
-                        {
-                            loader: 'postcss-loader',
-                            options: {
-                                postcssOptions: postcss
-                            }
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            postcssOptions: postcss,
                         },
-                        'sass-loader'
-                    ]
-                })
+                    },
+                    'sass-loader',
+                ],
             },
-            // Xử lý hình ảnh.
             {
                 test: utils.tests.images,
                 use: [
                     {
                         loader: 'file-loader',
                         options: {
-                            name: file => `images/[name].${utils.filehash(file).substr(0, 10)}.[ext]`
-                        }
-                    }
-                ]
+                            name: file => `images/[name].${utils.filehash(file).substr(0, 10)}.[ext]`,
+                        },
+                    },
+                ],
             },
-            // Xử lý font.
             {
                 test: utils.tests.fonts,
                 use: [
                     {
                         loader: 'file-loader',
                         options: {
-                            name: file => `fonts/[name].${utils.filehash(file).substr(0, 10)}.[ext]`
-                        }
-                    }
-                ]
-            }
-        ]
+                            name: file => `fonts/[name].${utils.filehash(file).substr(0, 10)}.[ext]`,
+                        },
+                    },
+                ],
+            },
+        ],
     },
     plugins,
+
+    /**
+     * Setup the development tools.
+     */
     mode: 'production',
     cache: false,
     bail: false,
     watch: false,
-    devtool: false
+    devtool: false,
 };

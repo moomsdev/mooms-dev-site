@@ -1,10 +1,11 @@
 /**
  * The external dependencies.
  */
-const {ProvidePlugin, WatchIgnorePlugin} = require('webpack');
-const CleanWebpackPlugin = require('clean-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const ManifestPlugin = require('webpack-manifest-plugin');
+const { ProvidePlugin, WatchIgnorePlugin } = require('webpack');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const WebpackAssetsManifest = require('webpack-assets-manifest');
+const SpritesmithPlugin = require('webpack-spritesmith');
 
 /**
  * The internal dependencies.
@@ -18,151 +19,123 @@ const browsersync = require('./browsersync');
 /**
  * Setup the env.
  */
-const {env: envName} = utils.detectEnv();
+const { env: envName } = utils.detectEnv();
 
 /**
  * Setup babel loader.
  */
 const babelLoader = {
-    loader : 'babel-loader',
+    loader: 'babel-loader',
     options: {
         cacheDirectory: true,
-        comments      : false,
-        presets       : [
-            '@babel/preset-env'
+        comments: false,
+        presets: [
+            '@babel/preset-env',
         ],
     },
 };
 
 /**
- * Setup extract text plugin.
- */
-const extractSass = new ExtractTextPlugin({
-    filename: 'styles/[name].css',
-});
-
-/**
  * Setup webpack plugins.
  */
 const plugins = [
-    new CleanWebpackPlugin(utils.distPath(), {
-        root: utils.themeRootPath(),
+    new CleanWebpackPlugin({
+        cleanOnceBeforeBuildPatterns: [utils.distPath()],
     }),
-    new WatchIgnorePlugin([
-        utils.distImagesPath('sprite.png'),
-        utils.distImagesPath('sprite@2x.png'),
-    ]),
+    new WatchIgnorePlugin({
+        paths: [/node_modules/, /dist/]
+    }),
     new ProvidePlugin({
-        $     : 'jquery',
+        $: 'jquery',
         jQuery: 'jquery',
     }),
-    extractSass,
+    new MiniCssExtractPlugin({
+        filename: 'styles/[name].css',
+    }),
+    new SpritesmithPlugin({
+        src: {
+            cwd: utils.srcImagesPath('sprite'),
+            glob: '*.{jpg,jpeg,png}',
+        },
+        target: {
+            image: utils.distImagesPath('sprite.png'),
+            css: utils.srcStylesPath('theme/_sprite.scss'),
+        },
+        apiOptions: {
+            cssImageRef: '../images/sprite.png',
+        },
+    }),
     spriteSmith,
     browsersync,
-    new ManifestPlugin(),
+    new WebpackAssetsManifest(),
 ];
 
 /**
  * Export the configuration.
  */
 module.exports = {
-    /**
-     * The input.
-     */
     entry: require('./webpack/entry'),
-
-    /**
-     * The output.
-     */
     output: require('./webpack/output'),
-
-    /**
-     * Resolve utilities.
-     */
     resolve: require('./webpack/resolve'),
-
-    /**
-     * Resolve the dependencies that are available in the global scope.
-     */
     externals: require('./webpack/externals'),
-
-    /**
-     * Setup the transformations.
-     */
     module: {
         rules: [
-            /**
-             * Add support for blogs in import statements.
-             */
             {
                 enforce: 'pre',
-                test   : /\.(js|jsx|css|scss|sass)$/,
-                use    : 'import-glob',
+                test: /\.(js|jsx|css|scss|sass)$/i,
+                use: 'import-glob',
             },
-
-            /**
-             * Handle the theme config.json.
-             */
             {
                 test: utils.themeRootPath('config.json'),
-                use : configLoader,
+                use: configLoader,
             },
-
-            /**
-             * Handle scripts.
-             */
             {
-                test   : utils.tests.scripts,
+                test: utils.tests.scripts,
                 exclude: /node_modules/,
-                use    : babelLoader,
+                use: babelLoader,
             },
-
-            /**
-             * Handle styles.
-             */
             {
                 test: utils.tests.styles,
-                use : extractSass.extract({
-                    publicPath: '../',
-                    use       : [
-                        {
-                            loader : 'css-loader',
-                            options: {
-                                minimize: false,
-                            },
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            sourceMap: true,
+                            importLoaders: 1
                         },
-                        {
-                            loader : 'postcss-loader',
-                            options: postcss,
+                    },
+                    {
+                        loader: 'postcss-loader',
+                        options: {
+                            postcssOptions: postcss,
                         },
-                        'sass-loader',
-                    ],
-                }),
+                    },
+                    'sass-loader',
+                ],
             },
-
-            /**
-             * Handle images.
-             */
             {
                 test: utils.tests.images,
-                use : [
+                use: [
                     {
-                        loader : 'file-loader',
+                        loader: 'file-loader',
+                        // options: {
+                        //     name: file => `/images/[name].${utils.filehash(file).substr(0, 10)}.[ext]`,
+                        // },
                         options: {
-                            name: file => `images/[name].${utils.filehash(file).substr(0, 10)}.[ext]`,
+                            name: '[path][name].[ext]',
+                            context: utils.srcPath(), // hoặc sử dụng đường dẫn thích hợp để webpack lấy đường dẫn tương đối chính xác
+                            outputPath: 'images', // Đảm bảo hình ảnh được đặt vào thư mục /dist/images/
+                            publicPath: '../images', // Đảm bảo đường dẫn trong CSS là đúng
                         },
                     },
                 ],
             },
-
-            /**
-             * Handle fonts.
-             */
             {
                 test: utils.tests.fonts,
-                use : [
+                use: [
                     {
-                        loader : 'file-loader',
+                        loader: 'file-loader',
                         options: {
                             name: file => `fonts/[name].${utils.filehash(file).substr(0, 10)}.[ext]`,
                         },
@@ -171,18 +144,14 @@ module.exports = {
             },
         ],
     },
-
-    /**
-     * Setup the transformations.
-     */
     plugins,
 
     /**
      * Setup the development tools.
      */
-    mode   : envName,
-    cache  : true,
-    bail   : false,
-    watch  : true,
+    mode: envName,
+    cache: true,
+    bail: false,
+    watch: true,
     devtool: 'source-map',
 };

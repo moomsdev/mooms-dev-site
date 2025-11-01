@@ -51,9 +51,9 @@ module.exports.distFontsPath = destPath =>
 
 module.exports.tests = {
     scripts: /\.(js|jsx)$/,
-    styles: /\.(css|scss|sass)$/,
-    images: /images[\\/].*\.(ico|jpg|jpeg|png|svg|gif)$/,
-    fonts: /fonts[\\/].*\.(eot|otf|svg|TTF|ttf|woff|woff2)$/,
+    styles : /\.(css|scss|sass)$/,
+    images : /images[\\/].*\.(ico|jpg|jpeg|png|svg|gif)$/,
+    fonts  : /fonts[\\/].*\.(eot|otf|svg|TTF|ttf|woff|woff2)$/,
 };
 
 module.exports.detectEnv = () => {
