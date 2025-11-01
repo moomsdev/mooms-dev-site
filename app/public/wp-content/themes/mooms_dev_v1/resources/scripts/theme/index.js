@@ -8,16 +8,16 @@ import { gsap } from "gsap";
 import { SplitText } from "gsap/SplitText";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// import Swup from 'swup';
+import Swup from 'swup';
 import Swiper from "swiper/swiper-bundle.min";
 
 jQuery(document).ready(function () {
-    // const swup = new Swup();
+    const swup = new Swup();
     initializePageFeatures();
 
-    // swup.hooks.on('content:replace', () => {
-    //   initializePageFeatures();
-    // });
+    swup.hooks.on('content:replace', () => {
+      initializePageFeatures();
+    });
 });
 
 function initializePageFeatures() {

@@ -427,7 +427,13 @@ abstract class AbstractPostType
 		switch ($column) {
 			case 'featured_image':
 				$thumbnailUrl = get_the_post_thumbnail_url($postId);
-				echo "<a href='javascript:' data-trigger-change-thumbnail-id data-post-id='{$postId}'><img src='{$thumbnailUrl}'/></a>";
+				echo "<a href='javascript:' data-trigger-change-thumbnail-id data-post-id='{$postId}'>";
+				if ($thumbnailUrl) {
+					echo "<img src='" . esc_url($thumbnailUrl) . "' alt='' />";
+				} else {
+					echo "<div class='no-image-text'>Choose Image</div>";
+				}
+				echo "</a>";
 				break;
 		}
 	}
