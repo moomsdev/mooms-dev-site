@@ -9,6 +9,7 @@ class CustomLoginPage
     {
         $this->enqueueAssets();
         $this->addGoogleLoginButton();
+        $this->addLoginLogoStyles();
     }
 
     /**
@@ -39,6 +40,43 @@ class CustomLoginPage
     {
         add_action('login_form', [$this, 'addGoogleLoginButtonToForm']);
         add_action('register_form', [$this, 'addGoogleLoginButtonToForm']);
+    }
+
+    /**
+     * Thêm CSS variables cho logo từ theme options
+     */
+    private function addLoginLogoStyles()
+    {
+        add_action('login_head', [$this, 'injectLoginLogoCSS']);
+    }
+
+    /**
+     * Inject CSS variables với logo URL từ theme options
+     */
+    public function injectLoginLogoCSS()
+    {
+        // Lấy logo từ theme options
+        $logo_id = carbon_get_theme_option('logo');
+        $logo_url = '';
+        
+        if (!empty($logo_id)) {
+            $logo_url = wp_get_attachment_image_url($logo_id, 'full');
+        }
+        
+        // Fallback về logo mặc định nếu không có logo trong theme options
+        if (empty($logo_url)) {
+            $my_theme = wp_get_theme();
+            $theme_name = str_replace('/theme', '', $my_theme->get_stylesheet());
+            $theme_path = str_replace('wp-content/themes/'. $theme_name .'/theme', 'wp-content/themes/' . $theme_name . '/', $my_theme->get_template_directory_uri());
+            $logo_url = $theme_path . '/resources/images/dev/moomsdev-white.png';
+        }
+        
+        // Inject CSS variable
+        echo '<style type="text/css">';
+        echo ':root {';
+        echo '  --login-logo-url: url("' . esc_url($logo_url) . '");';
+        echo '}';
+        echo '</style>';
     }
 
     /**
